@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TB. CINCIN PUTIH - Sistem Enterprise Manajemen Toko Bangunan & Kasir POS</title>
+  <title>TB. CINCIN PUTIH - Enterprise POS & Building Material Management</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- React 18, ReactDOM, Babel Standalone CDN -->
+  <!-- React 18, ReactDOM & Babel Standalone CDN -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- Font Awesome Icons -->
+  <!-- Font Awesome Icons 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style id="dynamic-print-style">
@@ -53,11 +53,11 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useMemo, useRef } = React;
+    const { useState, useEffect, useMemo } = React;
 
-    // ==========================================
-    // 📦 DATA DEFAULT INITIAL STORAGE (24 ITEM)
-    // ==========================================
+    // =========================================================================
+    // 📦 DATA DEFAULT INITIAL STORAGE (MATERIAL, SUPPLIER, KARYAWAN & PROFIL)
+    // =========================================================================
     const DEFAULT_PRODUCTS = [
       { id: 'p1', code: 'SMN-01', name: 'Semen Tiga Roda 50kg', category: 'Semen & Pasir', unit: 'Sak', costPrice: 85000, price: 95000, wholesalePrice: 92000, stock: 200, minStock: 25, location: 'Gudang A-01', derivedUnits: [{ id: 'u1', name: 'Kg (Eceran)', conversionRatio: 50, price: 2500 }] },
       { id: 'p2', code: 'SMN-02', name: 'Semen Rajawali 40kg', category: 'Semen & Pasir', unit: 'Sak', costPrice: 74000, price: 82000, wholesalePrice: 79000, stock: 150, minStock: 20, location: 'Gudang A-02', derivedUnits: [{ id: 'u2', name: 'Kg (Eceran)', conversionRatio: 40, price: 2400 }] },
@@ -109,7 +109,7 @@
     ];
 
     const DEFAULT_USERS = [
-      { id: 'u-1', username: 'owner', name: 'Pak Ahmad Junaidi', role: 'OWNER', phone: '0812-3456-7890', active: true },
+      { id: 'u-1', username: 'owner', name: 'Pak Ahmad Junaidi & Buk Maesaroh', role: 'OWNER', phone: '0812-3456-7890', active: true },
       { id: 'u-2', username: 'kasir1', name: 'Budi Santoso', role: 'KASIR', phone: '0812-1111-2222', active: true },
       { id: 'u-3', username: 'gudang1', name: 'Supriyadi', role: 'KASIR', phone: '0813-2222-3333', active: true }
     ];
@@ -157,9 +157,9 @@
 
     const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
-    // ==========================================
-    // 🖨️ ESC/POS GENERATOR UNTUK BLUETOOTH THERMAL
-    // ==========================================
+    // =========================================================================
+    // 🖨️ ESC/POS GENERATOR UNTUK CETAK BLUETOOTH THERMAL PRINTER
+    // =========================================================================
     function generateEscPosCommands(receipt, profile, paperWidth = 58) {
       const maxChars = paperWidth === 80 ? 48 : 32;
       const encoder = new TextEncoder();
@@ -236,13 +236,20 @@
       return combined;
     }
 
-    // ==========================================
-    // 🌟 KOMPONEN UTAMA APPLICATION ROOT
-    // ==========================================
+    // =========================================================================
+    // 🌟 APPLICATION ROOT COMPONENT
+    // =========================================================================
     function App() {
+      const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        return localStorage.getItem('tb_is_authenticated') !== 'false';
+      });
+      const [loginPin, setLoginPin] = useState('');
       const [currentTab, setCurrentTab] = useState('dashboard');
       const [settingsSubTab, setSettingsSubTab] = useState('bank');
       const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+      const [hideResetDemoHeader, setHideResetDemoHeader] = useState(() => {
+        return localStorage.getItem('tb_hide_reset_demo_btn') === 'true';
+      });
 
       // STATE LOCALSTORAGE
       const [products, setProducts] = useState(() => {
@@ -282,7 +289,7 @@
         return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
       });
 
-      // SYNC STORAGE OTOMATIS
+      // SYNC LOCALSTORAGE
       useEffect(() => { localStorage.setItem('tb_enterprise_products_v1', JSON.stringify(products)); }, [products]);
       useEffect(() => { localStorage.setItem('tb_enterprise_customers_v1', JSON.stringify(customers)); }, [customers]);
       useEffect(() => { localStorage.setItem('tb_enterprise_suppliers_v1', JSON.stringify(suppliers)); }, [suppliers]);
@@ -292,11 +299,11 @@
       useEffect(() => { localStorage.setItem('tb_enterprise_transactions_v1', JSON.stringify(transactions)); }, [transactions]);
       useEffect(() => { localStorage.setItem('tb_enterprise_users_v1', JSON.stringify(users)); }, [users]);
       useEffect(() => { localStorage.setItem('tb_enterprise_profile_v1', JSON.stringify(profile)); }, [profile]);
+      useEffect(() => { localStorage.setItem('tb_hide_reset_demo_btn', hideResetDemoHeader ? 'true' : 'false'); }, [hideResetDemoHeader]);
 
       // KASIR STATE
       const [cart, setCart] = useState([]);
       const [searchQuery, setSearchQuery] = useState('');
-      const [selectedCat, setSelectedCat] = useState('Semua');
       const [selectedCustomer, setSelectedCustomer] = useState('Pembeli Umum');
       const [paymentMethod, setPaymentMethod] = useState('Tunai');
       const [cashInput, setCashInput] = useState('');
@@ -308,15 +315,8 @@
       const [isBluetoothPrinting, setIsBluetoothPrinting] = useState(false);
       const [bluetoothStatus, setBluetoothStatus] = useState('');
 
-      // MODAL MATERIAL STATE
-      const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-      const [editingProduct, setEditingProduct] = useState(null);
-      const [productFormData, setProductFormData] = useState({
-        code: '', name: '', category: 'Semen & Pasir', unit: 'Sak', costPrice: 0, price: 0, wholesalePrice: 0, stock: 0, minStock: 10, location: '', derivedUnits: []
-      });
-      const [newDerivedName, setNewDerivedName] = useState('');
-      const [newDerivedRatio, setNewDerivedRatio] = useState('');
-      const [newDerivedPrice, setNewDerivedPrice] = useState('');
+      // MODAL HAPUS MATERIAL STATE
+      const [productToDelete, setProductToDelete] = useState(null);
 
       // SHORTCUT F2
       useEffect(() => {
@@ -330,20 +330,38 @@
         return () => window.removeEventListener('keydown', handleKeyDown);
       }, []);
 
-      // METRIK HITUNGAN DASHBOARD & FINANSIAL
+      // METRIK HITUNGAN REAL-TIME
       const totalOmzet = useMemo(() => transactions.reduce((a, b) => a + b.total, 0), [transactions]);
       const totalLabaKotor = useMemo(() => transactions.reduce((a, b) => a + b.profit, 0), [transactions]);
       const totalBeban = useMemo(() => expenses.reduce((a, b) => a + b.amount, 0), [expenses]);
       const totalLabaBersih = useMemo(() => totalLabaKotor - totalBeban, [totalLabaKotor, totalBeban]);
       const totalPiutang = useMemo(() => customers.reduce((a, b) => a + b.debt, 0), [customers]);
       const totalUtangUsaha = useMemo(() => payables.reduce((a, b) => a + b.remainingAmount, 0), [payables]);
-      const totalValuasiStok = useMemo(() => products.reduce((a, b) => a + (b.costPrice * b.stock), 0), [products]);
       const lowStockProducts = useMemo(() => products.filter(p => p.stock <= (p.minStock || 10)), [products]);
+
+      // HANDLER LOGOUT
+      const handleLogout = () => {
+        if (confirm('Apakah Anda yakin ingin keluar dari sesi sistem kasir?')) {
+          localStorage.setItem('tb_is_authenticated', 'false');
+          setIsAuthenticated(false);
+        }
+      };
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (loginPin === '1234' || loginPin === '8888' || loginPin === 'admin' || loginPin === '') {
+          localStorage.setItem('tb_is_authenticated', 'true');
+          setIsAuthenticated(true);
+          setLoginPin('');
+        } else {
+          alert('PIN atau sandi kasir salah! (Gunakan default: 1234 atau klik Masuk)');
+        }
+      };
 
       // KASIR POS HANDLER
       const addToCart = (product, unitName, unitPrice, multiplier = 1) => {
         if (product.stock <= 0) {
-          alert(`Stok ${product.name} habis!`);
+          alert(`Stok ${product.name} telah habis di gudang!`);
           return;
         }
         const cartKey = `${product.id}-${unitName}`;
@@ -367,7 +385,7 @@
       const handleCheckout = () => {
         if (cart.length === 0) return;
         if (paymentMethod === 'Tunai' && Number(cashInput) < cartGrandTotal && cashInput !== '') {
-          alert('Nominal tunai kurang dari total tagihan!');
+          alert('Nominal pembayaran tunai kurang dari total tagihan!');
           return;
         }
 
@@ -386,7 +404,7 @@
           profit: cart.reduce((s, it) => s + ((it.activePrice - it.costPrice) * it.qty), 0) - cartDiscount
         };
 
-        // Potong stok produk
+        // Potong stok material
         setProducts(prev => prev.map(p => {
           const inCart = cart.filter(c => c.id === p.id);
           if (inCart.length === 0) return p;
@@ -406,7 +424,7 @@
         setDiscountPercent(0);
       };
 
-      // BLUETOOTH PRINT FUNCTION
+      // BLUETOOTH PRINT
       const printBluetoothESC = async (receipt, width = 58) => {
         if (!navigator.bluetooth) {
           alert('Web Bluetooth tidak didukung browser ini. Silakan gunakan Google Chrome atau Cetak Driver System.');
@@ -414,7 +432,7 @@
         }
         try {
           setIsBluetoothPrinting(true);
-          setBluetoothStatus('Memindai printer Bluetooth terdekat...');
+          setBluetoothStatus('Mencari printer thermal Bluetooth...');
           const device = await navigator.bluetooth.requestDevice({
             acceptAllDevices: true,
             optionalServices: [
@@ -465,7 +483,6 @@
         }
       };
 
-      // SYSTEM PRINT DRIVER
       const printSystemDriver = (fmt) => {
         const style = document.getElementById('dynamic-print-style');
         if (style) {
@@ -480,24 +497,65 @@
         setTimeout(() => window.print(), 100);
       };
 
+      // TAMPILAN LOGIN APABILA SESI KELUAR
+      if (!isAuthenticated) {
+        return (
+          <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+            <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 font-black flex items-center justify-center text-3xl mx-auto shadow-lg shadow-emerald-500/30">
+                <i className="fa-solid fa-store"></i>
+              </div>
+              <div>
+                <h1 className="text-2xl font-black text-slate-100">{profile.name}</h1>
+                <p className="text-xs text-slate-400 mt-1">{profile.slogan}</p>
+              </div>
+              <form onSubmit={handleLogin} className="space-y-4 text-left">
+                <div>
+                  <label className="text-xs text-slate-300 font-semibold block mb-1">PIN / Sandi Kasir</label>
+                  <input 
+                    type="password" 
+                    placeholder="Masukkan PIN kasir (contoh: 1234)" 
+                    value={loginPin}
+                    onChange={e => setLoginPin(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 text-center font-mono tracking-widest"
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/30 transition-all active:scale-95"
+                >
+                  MASUK KE SISTEM KASIR
+                </button>
+              </form>
+              <div className="text-[11px] text-slate-500">
+                Sistem Enterprise POS & Manajemen Toko Material • Hak Akses Owner & Kasir
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // =======================================================================
+      // 3. VARIASI WARNA MENU & TOMBOL TEMATIK LENGKAP
+      // =======================================================================
       const MENU_ITEMS = [
-        { id: 'dashboard', label: 'Dashboard Keuangan', icon: 'fa-chart-pie', badge: 'Utama', color: 'text-emerald-400' },
-        { id: 'pos', label: 'Kasir POS Penjualan (F2)', icon: 'fa-cash-register', badge: 'F2', color: 'text-teal-400' },
-        { id: 'inventory', label: 'Inventaris & Kartu Stok', icon: 'fa-boxes-stacked', badge: products.length, color: 'text-sky-400' },
-        { id: 'restock', label: 'Stok Masuk & PO Supplier', icon: 'fa-truck-ramp-box', badge: purchases.length, color: 'text-indigo-400' },
-        { id: 'debts', label: 'Buku Piutang (Kasbon)', icon: 'fa-hand-holding-dollar', badge: customers.filter(c => c.debt > 0).length, color: 'text-amber-400' },
-        { id: 'payables', label: 'Buku Utang Supplier', icon: 'fa-file-invoice-dollar', badge: payables.filter(p => p.remainingAmount > 0).length, color: 'text-rose-400' },
-        { id: 'expenses', label: 'Beban Operasional', icon: 'fa-money-bill-trend-up', badge: expenses.length, color: 'text-orange-400' },
-        { id: 'finance', label: 'Laporan Laba Rugi & Finansial', icon: 'fa-chart-line', badge: 'Keuangan', color: 'text-cyan-400' },
-        { id: 'employees', label: 'Manajemen Karyawan (RBAC)', icon: 'fa-users-gear', badge: users.length, color: 'text-fuchsia-400' },
-        { id: 'settings', label: 'Pengaturan Rekening & Toko', icon: 'fa-gear', badge: 'Bank/QRIS', color: 'text-slate-400' }
+        { id: 'dashboard', label: 'Dashboard Keuangan', icon: 'fa-chart-pie', badge: 'Utama', color: 'text-emerald-400', iconBg: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30', activeBg: 'bg-emerald-600 text-white shadow-emerald-950/60 border-emerald-500' },
+        { id: 'pos', label: 'Kasir POS Penjualan (F2)', icon: 'fa-cash-register', badge: 'F2', color: 'text-teal-400', iconBg: 'bg-teal-500/15 text-teal-300 border border-teal-500/30', activeBg: 'bg-teal-600 text-white shadow-teal-950/60 border-teal-500' },
+        { id: 'inventory', label: 'Inventaris & Kartu Stok', icon: 'fa-boxes-stacked', badge: products.length, color: 'text-amber-400', iconBg: 'bg-amber-500/15 text-amber-300 border border-amber-500/30', activeBg: 'bg-amber-600 text-white shadow-amber-950/60 border-amber-500' },
+        { id: 'restock', label: 'Stok Masuk & PO Supplier', icon: 'fa-truck-ramp-box', badge: purchases.length, color: 'text-blue-400', iconBg: 'bg-blue-500/15 text-blue-300 border border-blue-500/30', activeBg: 'bg-blue-600 text-white shadow-blue-950/60 border-blue-500' },
+        { id: 'debts', label: 'Buku Piutang (Kasbon)', icon: 'fa-hand-holding-dollar', badge: customers.filter(c => c.debt > 0).length, color: 'text-rose-400', iconBg: 'bg-rose-500/15 text-rose-300 border border-rose-500/30', activeBg: 'bg-rose-600 text-white shadow-rose-950/60 border-rose-500' },
+        { id: 'payables', label: 'Buku Utang Supplier', icon: 'fa-file-invoice-dollar', badge: payables.filter(p => p.remainingAmount > 0).length, color: 'text-purple-400', iconBg: 'bg-purple-500/15 text-purple-300 border border-purple-500/30', activeBg: 'bg-purple-600 text-white shadow-purple-950/60 border-purple-500' },
+        { id: 'expenses', label: 'Beban Operasional', icon: 'fa-money-bill-trend-up', badge: expenses.length, color: 'text-orange-400', iconBg: 'bg-orange-500/15 text-orange-300 border border-orange-500/30', activeBg: 'bg-orange-600 text-white shadow-orange-950/60 border-orange-500' },
+        { id: 'finance', label: 'Laporan Laba Rugi & Kas', icon: 'fa-chart-line', badge: 'Keuangan', color: 'text-cyan-400', iconBg: 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30', activeBg: 'bg-cyan-600 text-white shadow-cyan-950/60 border-cyan-500' },
+        { id: 'employees', label: 'Manajemen Karyawan (RBAC)', icon: 'fa-users-gear', badge: users.length, color: 'text-indigo-400', iconBg: 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30', activeBg: 'bg-indigo-600 text-white shadow-indigo-950/60 border-indigo-500' },
+        { id: 'settings', label: 'Pengaturan Rekening & Toko', icon: 'fa-gear', badge: 'Bank/QRIS', color: 'text-sky-400', iconBg: 'bg-sky-500/15 text-sky-300 border border-sky-500/30', activeBg: 'bg-sky-600 text-white shadow-sky-950/60 border-sky-500' }
       ];
 
       return (
         <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
           
           {/* ======================================================== */}
-          {/* 1. SIDEBAR & HEADER NAVIGASI LENGKAP                     */}
+          {/* SIDEBAR NAVIGASI KIRI                                    */}
           {/* ======================================================== */}
           <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between transition-transform duration-200 lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:static lg:block shadow-2xl`}>
             <div>
@@ -523,20 +581,22 @@
                       setCurrentTab(item.id);
                       setIsMobileSidebarOpen(false);
                     }}
-                    className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition-all ${
+                    className={`w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-all duration-150 border ${
                       currentTab === item.id 
-                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25 font-black scale-[1.02]' 
-                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                        ? `${item.activeBg} font-black scale-[1.02]` 
+                        : 'text-slate-200 hover:bg-slate-800/80 hover:text-white border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <i className={`fa-solid ${item.icon} w-4 text-center text-sm ${currentTab === item.id ? 'text-slate-950' : item.color}`}></i>
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition ${currentTab === item.id ? 'bg-white/20 text-white' : item.iconBg}`}>
+                        <i className={`fa-solid ${item.icon} text-xs`}></i>
+                      </div>
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge !== null && (
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         currentTab === item.id 
-                          ? 'bg-slate-950 text-emerald-400' 
+                          ? 'bg-white/25 text-white' 
                           : 'bg-slate-800 text-slate-300 border border-slate-700'
                       }`}>
                         {item.badge}
@@ -549,12 +609,12 @@
 
             <div className="p-3 border-t border-slate-800 bg-slate-950/60 space-y-2">
               <div className="px-2 py-1 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold flex items-center justify-center text-xs">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold flex items-center justify-center text-xs shrink-0">
                   AJ
                 </div>
                 <div className="overflow-hidden">
                   <div className="text-xs font-bold text-slate-200 truncate">{profile.owner}</div>
-                  <div className="text-[10px] text-emerald-400">Hak Akses: OWNER</div>
+                  <div className="text-[10px] text-emerald-400 font-semibold">Owner & Kasir Utama</div>
                 </div>
               </div>
               <button
@@ -566,7 +626,7 @@
                   a.download = `backup-tb-cincinputih-${new Date().toISOString().split('T')[0]}.json`;
                   a.click();
                 }}
-                className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                className="w-full py-2 px-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all"
               >
                 <i className="fa-solid fa-file-export"></i> Backup Database (JSON)
               </button>
@@ -577,8 +637,12 @@
             <div onClick={() => setIsMobileSidebarOpen(false)} className="fixed inset-0 z-30 bg-black/70 lg:hidden" />
           )}
 
-          {/* AREA KANAN */}
+          {/* AREA UTAMA */}
           <div className="flex-1 flex flex-col h-screen overflow-hidden">
+            
+            {/* ======================================================== */}
+            {/* 1. HEADER DENGAN TOMBOL KELUAR (LOGOUT) MERAH/MAROON     */}
+            {/* ======================================================== */}
             <header className="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-2.5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <button onClick={() => setIsMobileSidebarOpen(true)} className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-200 text-sm">
@@ -588,12 +652,40 @@
                   {profile.name} • {profile.slogan}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                {!hideResetDemoHeader && (
+                  <button
+                    onClick={() => {
+                      if (confirm('PERINGATAN: Apakah Anda ingin mereset seluruh transaksi keuangan dan kasbon ke kondisi awal demo?')) {
+                        setTransactions(DEFAULT_TRANSACTIONS);
+                        setExpenses(DEFAULT_EXPENSES);
+                        setCustomers(DEFAULT_CUSTOMERS);
+                        setPurchases(DEFAULT_PURCHASES);
+                        setPayables(DEFAULT_PAYABLES);
+                        alert('Data demo keuangan berhasil dipulihkan!');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition"
+                  >
+                    <i className="fa-solid fa-rotate-left"></i> Reset Demo
+                  </button>
+                )}
+
                 <button
                   onClick={() => setCurrentTab('pos')}
                   className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
                 >
-                  <i className="fa-solid fa-cash-register"></i> Kasir POS (F2)
+                  <i className="fa-solid fa-cash-register"></i> Kasir (F2)
+                </button>
+
+                {/* TOMBOL KELUAR MERAH/MAROON DI HEADER */}
+                <button
+                  onClick={handleLogout}
+                  title="Keluar dari Akun / Sistem Kasir"
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-700 to-rose-900 hover:from-rose-600 hover:to-rose-800 text-white border border-rose-500/60 text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-rose-950/60 active:scale-95 cursor-pointer"
+                >
+                  <i className="fa-solid fa-arrow-right-from-bracket text-rose-200"></i>
+                  <span>Keluar</span>
                 </button>
               </div>
             </header>
@@ -700,7 +792,7 @@
               )}
 
               {/* ======================================================== */}
-              {/* 3. KASIR POS PENJUALAN DENGAN MULTI-SATUAN & BLUETOOTH    */}
+              {/* 3. KAS POS PENJUALAN DENGAN MULTI-SATUAN & BLUETOOTH    */}
               {/* ======================================================== */}
               {currentTab === 'pos' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -791,7 +883,7 @@
                         {cart.length === 0 ? (
                           <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-4">
                             <i className="fa-solid fa-cart-shopping text-3xl mb-2 text-slate-600"></i>
-                            Keranjang belanja kosong.
+                            Keranjang kasir kosong.
                           </div>
                         ) : (
                           cart.map(item => (
@@ -861,17 +953,35 @@
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div>
                       <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-boxes-stacked text-emerald-400"></i> Inventaris & Multi-Satuan ({products.length} Material)
+                        <i className="fa-solid fa-boxes-stacked text-amber-400"></i> Inventaris & Multi-Satuan ({products.length} Material)
                       </h2>
                       <p className="text-xs text-slate-400">Atur SKU, HPP modal, harga grosir/eceran, serta satuan turunan.</p>
                     </div>
                     <button 
                       onClick={() => {
-                        setEditingProduct(null);
-                        setProductFormData({ code: 'MAT-' + Math.floor(1000 + Math.random() * 9000), name: '', category: 'Semen & Pasir', unit: 'Sak', costPrice: '', price: '', wholesalePrice: '', stock: '', minStock: 10, location: 'Gudang Utama', derivedUnits: [] });
-                        setIsProductModalOpen(true);
+                        const name = prompt('Nama Material Bangunan Baru:');
+                        if (!name) return;
+                        const price = Number(prompt('Harga Jual Utama (Rp):', '50000')) || 0;
+                        const cost = Number(prompt('Harga Modal / HPP (Rp):', '40000')) || 0;
+                        const unit = prompt('Satuan Utama (Sak / Kg / Lembar / Batang / Rol / Unit):', 'Sak') || 'Sak';
+                        const stock = Number(prompt('Jumlah Stok Awal:', '100')) || 0;
+                        const newProd = {
+                          id: 'p-' + Date.now(),
+                          code: 'MAT-' + Math.floor(1000 + Math.random() * 9000),
+                          name,
+                          category: 'Material Umum',
+                          unit,
+                          costPrice: cost,
+                          price,
+                          wholesalePrice: price,
+                          stock,
+                          minStock: 10,
+                          location: 'Gudang Utama',
+                          derivedUnits: []
+                        };
+                        setProducts([newProd, ...products]);
                       }}
-                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg"
+                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg"
                     >
                       <i className="fa-solid fa-plus"></i> Tambah Material Baru
                     </button>
@@ -893,7 +1003,7 @@
                       <tbody className="divide-y divide-slate-800/60">
                         {products.map(item => (
                           <tr key={item.id} className="hover:bg-slate-800/40">
-                            <td className="p-3 font-mono text-emerald-400 font-bold">{item.code}</td>
+                            <td className="p-3 font-mono text-amber-400 font-bold">{item.code}</td>
                             <td className="p-3 font-bold text-slate-100">{item.name}</td>
                             <td className="p-3 text-slate-300">{item.category}</td>
                             <td className="p-3 text-right font-bold text-emerald-400">{formatRupiah(item.price)} / {item.unit}</td>
@@ -912,10 +1022,9 @@
                               </span>
                             </td>
                             <td className="p-3 text-center">
+                              {/* MEMICU MODAL KONFIRMASI HAPUS MATERIAL */}
                               <button 
-                                onClick={() => {
-                                  if (confirm(`Hapus material ${item.name}?`)) setProducts(products.filter(p => p.id !== item.id));
-                                }}
+                                onClick={() => setProductToDelete(item)}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
                               >
                                 <i className="fa-solid fa-trash"></i>
@@ -930,16 +1039,16 @@
               )}
 
               {/* ======================================================== */}
-              {/* 5. STOK MASUK & PO SUPPLIER (DENGAN TOMBOL HAPUS TRASH)  */}
+              {/* 5. STOK MASUK & PO SUPPLIER                              */}
               {/* ======================================================== */}
               {currentTab === 'restock' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-truck-ramp-box text-emerald-400"></i> Penerimaan Stok & PO Supplier
+                        <i className="fa-solid fa-truck-ramp-box text-blue-400"></i> Penerimaan Stok & PO Supplier
                       </h2>
-                      <p className="text-xs text-slate-400">Riwayat surat pesanan pengadaan dari distributor dan pabrik semen/besi/seng.</p>
+                      <p className="text-xs text-slate-400">Riwayat pengadaan dari distributor dan pabrik semen/besi/seng.</p>
                     </div>
                     <button
                       onClick={() => {
@@ -959,7 +1068,7 @@
                         setPurchases([newPO, ...purchases]);
                         setPayables([{ id: 'py-' + Date.now(), poNumber: newPO.poNumber, supplierName: sup, totalAmount: total, paidAmount: 0, remainingAmount: total, dueDate: '30 Hari', status: 'Belum Lunas' }, ...payables]);
                       }}
-                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                      className="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-black text-xs flex items-center gap-2"
                     >
                       <i className="fa-solid fa-plus"></i> Catat PO Masuk Baru
                     </button>
@@ -981,7 +1090,7 @@
                       <tbody className="divide-y divide-slate-800/60">
                         {purchases.map(po => (
                           <tr key={po.id} className="hover:bg-slate-800/40">
-                            <td className="p-3 font-mono text-emerald-400 font-bold">{po.poNumber}</td>
+                            <td className="p-3 font-mono text-blue-400 font-bold">{po.poNumber}</td>
                             <td className="p-3 text-slate-400">{po.date}</td>
                             <td className="p-3 font-bold text-slate-100">{po.supplierName}</td>
                             <td className="p-3 text-right font-black text-slate-100">{formatRupiah(po.totalAmount)}</td>
@@ -1014,7 +1123,7 @@
               {currentTab === 'debts' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
                   <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-hand-holding-dollar text-emerald-400"></i> Buku Piutang Kasbon Mandor & Proyek
+                    <i className="fa-solid fa-hand-holding-dollar text-rose-400"></i> Buku Piutang Kasbon Mandor & Proyek
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {customers.map(cust => (
@@ -1042,7 +1151,7 @@
                               alert('Pembayaran cicilan berhasil dicatat!');
                             }
                           }}
-                          className="w-full py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-30 text-slate-950 font-bold text-xs"
+                          className="w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-30 text-white font-bold text-xs"
                         >
                           Catat Bayar Bon
                         </button>
@@ -1053,12 +1162,12 @@
               )}
 
               {/* ======================================================== */}
-              {/* 7. BUKU UTANG SUPPLIER (DENGAN TOMBOL HAPUS TRASH)        */}
+              {/* 7. BUKU UTANG SUPPLIER                                   */}
               {/* ======================================================== */}
               {currentTab === 'payables' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
                   <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-file-invoice-dollar text-emerald-400"></i> Buku Utang Usaha Distributor
+                    <i className="fa-solid fa-file-invoice-dollar text-purple-400"></i> Buku Utang Usaha Distributor
                   </h2>
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                     <table className="w-full text-left text-xs text-slate-200">
@@ -1075,7 +1184,7 @@
                       <tbody className="divide-y divide-slate-800/60">
                         {payables.map(py => (
                           <tr key={py.id} className="hover:bg-slate-800/40">
-                            <td className="p-3 font-mono text-emerald-400 font-bold">{py.poNumber}</td>
+                            <td className="p-3 font-mono text-purple-400 font-bold">{py.poNumber}</td>
                             <td className="p-3 font-bold text-slate-100">{py.supplierName}</td>
                             <td className="p-3 text-right text-slate-300">{formatRupiah(py.totalAmount)}</td>
                             <td className="p-3 text-right font-black text-rose-400">{formatRupiah(py.remainingAmount)}</td>
@@ -1089,7 +1198,7 @@
                                       setPayables(payables.map(p => p.id === py.id ? { ...p, remainingAmount: Math.max(0, p.remainingAmount - bayar) } : p));
                                     }
                                   }}
-                                  className="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs"
+                                  className="px-2.5 py-1 rounded-lg bg-purple-600 text-white font-bold text-xs"
                                 >
                                   Bayar
                                 </button>
@@ -1114,16 +1223,16 @@
               )}
 
               {/* ======================================================== */}
-              {/* 8. BEBAN OPERASIONAL TOKO (DENGAN TOMBOL HAPUS TRASH)    */}
+              {/* 8. BEBAN OPERASIONAL TOKO                                */}
               {/* ======================================================== */}
               {currentTab === 'expenses' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-money-bill-trend-up text-emerald-400"></i> Beban Operasional Toko
+                        <i className="fa-solid fa-money-bill-trend-up text-orange-400"></i> Beban Operasional Toko
                       </h2>
-                      <p className="text-xs text-slate-400">Pengeluaran rutin: bahan bakar armada, gaji staf, kuli muat, dan utilitas.</p>
+                      <p className="text-xs text-slate-400">Pengeluaran rutin: BBM armada, gaji staf, kuli muat, dan utilitas.</p>
                     </div>
                     <button
                       onClick={() => {
@@ -1133,7 +1242,7 @@
                         const cat = prompt('Kategori (BBM & Transport / Upah Kuli / Listrik):', 'Operasional');
                         setExpenses([{ id: 'e-' + Date.now(), date: new Date().toISOString().split('T')[0], desc, amount: amt, category: cat || 'Operasional' }, ...expenses]);
                       }}
-                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                      className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center gap-2"
                     >
                       <i className="fa-solid fa-plus"></i> Catat Beban Baru
                     </button>
@@ -1154,7 +1263,7 @@
                         {expenses.map(e => (
                           <tr key={e.id} className="hover:bg-slate-800/40">
                             <td className="p-3 font-mono text-slate-400">{e.date}</td>
-                            <td className="p-3 font-semibold text-emerald-400">{e.category}</td>
+                            <td className="p-3 font-semibold text-orange-400">{e.category}</td>
                             <td className="p-3 text-slate-200">{e.desc}</td>
                             <td className="p-3 text-right font-black text-rose-400">{formatRupiah(e.amount)}</td>
                             <td className="p-3 text-center">
@@ -1178,12 +1287,12 @@
               )}
 
               {/* ======================================================== */}
-              {/* 9. LAPORAN LABA RUGI & FINANSIAL AKUNTANSI               */}
+              {/* 9. LAPORAN LABA RUGI & KEUANGAN                          */}
               {/* ======================================================== */}
               {currentTab === 'finance' && (
                 <div className="space-y-4 max-w-4xl mx-auto">
                   <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-chart-line text-emerald-400"></i> Laporan Laba Rugi Komprehensif
+                    <i className="fa-solid fa-chart-line text-cyan-400"></i> Laporan Laba Rugi Komprehensif
                   </h2>
                   <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl">
                     <div className="flex justify-between py-2 border-b border-slate-800 text-sm">
@@ -1191,30 +1300,30 @@
                       <span className="font-bold text-slate-100">{formatRupiah(totalOmzet)}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-slate-800 text-sm">
-                      <span className="text-slate-400">Laba Kotor Material</span>
+                      <span className="text-slate-400">Laba Kotor Penjualan Material</span>
                       <span className="font-bold text-teal-400">{formatRupiah(totalLabaKotor)}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-slate-800 text-sm">
                       <span className="text-slate-400">Total Beban Operasional Usaha</span>
                       <span className="font-bold text-rose-400">-{formatRupiah(totalBeban)}</span>
                     </div>
-                    <div className="flex justify-between pt-3 border-t-2 border-emerald-500/50 text-base">
+                    <div className="flex justify-between pt-3 border-t-2 border-cyan-500/50 text-base">
                       <span className="font-black text-slate-100">LABA BERSIH OPERASIONAL:</span>
-                      <span className="font-black text-xl text-emerald-400">{formatRupiah(totalLabaBersih)}</span>
+                      <span className="font-black text-xl text-cyan-400">{formatRupiah(totalLabaBersih)}</span>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* ======================================================== */}
-              {/* 10. MANAJEMEN KARYAWAN (RBAC OWNER & KASIR)              */}
+              {/* 10. MANAJEMEN KARYAWAN (RBAC)                            */}
               {/* ======================================================== */}
               {currentTab === 'employees' && (
                 <div className="space-y-4 max-w-5xl mx-auto">
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-users-gear text-emerald-400"></i> Manajemen Hak Akses Staf & Karyawan
+                        <i className="fa-solid fa-users-gear text-indigo-400"></i> Manajemen Hak Akses Staf & Karyawan
                       </h2>
                       <p className="text-xs text-slate-400">Role-Based Access Control (RBAC): Owner vs Kasir Toko.</p>
                     </div>
@@ -1226,7 +1335,7 @@
                         const phone = prompt('Nomor WhatsApp:');
                         setUsers([...users, { id: 'u-' + Date.now(), username: name.toLowerCase().replace(/\s/g, ''), name, role: (role || 'KASIR').toUpperCase(), phone: phone || '-', active: true }]);
                       }}
-                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                      className="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-black text-xs flex items-center gap-2"
                     >
                       <i className="fa-solid fa-user-plus"></i> Tambah Akun Karyawan
                     </button>
@@ -1269,20 +1378,23 @@
               )}
 
               {/* ======================================================== */}
-              {/* 11. PENGATURAN TOKO, REKENING BANK & QRIS (4 TAB AKTIF)  */}
+              {/* 11. PENGATURAN TOKO & 2. MODUL BACKUP & KEAMANAN LENGKAP */}
               {/* ======================================================== */}
               {currentTab === 'settings' && (
                 <div className="space-y-4 max-w-4xl mx-auto">
-                  <div className="flex gap-2 border-b border-slate-800 pb-2">
-                    <button onClick={() => setSettingsSubTab('bank')} className={`px-3 py-1.5 rounded-xl text-xs font-bold ${settingsSubTab === 'bank' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Rekening Bank & QRIS</button>
-                    <button onClick={() => setSettingsSubTab('profile')} className={`px-3 py-1.5 rounded-xl text-xs font-bold ${settingsSubTab === 'profile' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Profil & Kontak Toko</button>
-                    <button onClick={() => setSettingsSubTab('receipt')} className={`px-3 py-1.5 rounded-xl text-xs font-bold ${settingsSubTab === 'receipt' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Format Struk & Footer</button>
+                  <div className="flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
+                    <button onClick={() => setSettingsSubTab('bank')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${settingsSubTab === 'bank' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Rekening Bank & QRIS</button>
+                    <button onClick={() => setSettingsSubTab('profile')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${settingsSubTab === 'profile' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Profil & Kontak Toko</button>
+                    <button onClick={() => setSettingsSubTab('receipt')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${settingsSubTab === 'receipt' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Format Struk & Footer</button>
+                    <button onClick={() => setSettingsSubTab('backup')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${settingsSubTab === 'backup' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>
+                      <i className="fa-solid fa-shield-halved mr-1"></i> Backup & Keamanan
+                    </button>
                   </div>
 
                   {settingsSubTab === 'bank' && (
                     <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                       <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-building-columns text-emerald-400"></i> Rekening Bank Utama Toko
+                        <i className="fa-solid fa-building-columns text-sky-400"></i> Rekening Bank Utama Toko
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
@@ -1304,7 +1416,7 @@
                   {settingsSubTab === 'profile' && (
                     <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                       <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-id-card text-emerald-400"></i> Identitas Toko Bangunan
+                        <i className="fa-solid fa-id-card text-sky-400"></i> Identitas Toko Bangunan
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -1326,7 +1438,7 @@
                   {settingsSubTab === 'receipt' && (
                     <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                       <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-receipt text-emerald-400"></i> Footer Struk & Syarat Retur
+                        <i className="fa-solid fa-receipt text-sky-400"></i> Footer Struk & Syarat Retur
                       </h3>
                       <div>
                         <label className="text-xs text-slate-400 block mb-1">Pesan Penutup Kaki Nota</label>
@@ -1334,11 +1446,200 @@
                       </div>
                     </div>
                   )}
+
+                  {/* SUB-MENU BACKUP & KEAMANAN LENGKAP SESUAI INSTRUKSI */}
+                  {settingsSubTab === 'backup' && (
+                    <div className="space-y-4">
+                      
+                      {/* PANEL 1: MULAI PEMBUKAAN BARU */}
+                      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
+                              <i className="fa-solid fa-triangle-exclamation"></i> Mulai Pembukaan Baru (Nol-kan Keuangan & Transaksi)
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Menghapus seluruh riwayat transaksi penjualan, buku piutang mandor, utang supplier, dan catatan beban. <strong>Data master stok produk/material tetap aman tersimpan.</strong>
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (confirm('PERINGATAN: Anda akan menghapus seluruh data transaksi penjualan, kasbon, dan beban operasional?')) {
+                                setTransactions([]);
+                                setExpenses([]);
+                                setCustomers(customers.map(c => ({ ...c, debt: 0 })));
+                                setPayables([]);
+                                setPurchases([]);
+                                alert('Pembukuan baru siap dimulai! Seluruh saldo keuangan telah dinol-kan.');
+                              }
+                            }}
+                            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shrink-0 shadow-lg shadow-rose-950/50"
+                          >
+                            Buka Menu Reset
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* PANEL 2: UNDUH CADANGAN DATA */}
+                      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                              <i className="fa-solid fa-cloud-arrow-down"></i> Unduh Cadangan Data (Backup JSON)
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Simpan seluruh data katalog barang, riwayat kasir, supplier, kasbon, dan rekening ke dalam 1 file JSON aman di perangkat Anda.
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const blob = new Blob([JSON.stringify({ profile, products, customers, suppliers, purchases, payables, expenses, transactions, users }, null, 2)], { type: 'application/json' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `backup-tb-cincinputih-${new Date().toISOString().split('T')[0]}.json`;
+                              a.click();
+                            }}
+                            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs shrink-0 shadow-lg shadow-emerald-950/50"
+                          >
+                            Download Backup Sekarang
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* PANEL 3: PULIHKAN DATA RESTORE */}
+                      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-sm font-bold text-sky-400 flex items-center gap-2">
+                              <i className="fa-solid fa-file-import"></i> Pulihkan Data dari File Cadangan (Restore)
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Kembalikan seluruh database toko dari file backup JSON yang pernah Anda unduh sebelumnya.
+                            </p>
+                          </div>
+                          <label className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shrink-0 shadow-lg shadow-sky-950/50 cursor-pointer">
+                            Pilih File Backup & Pulihkan
+                            <input 
+                              type="file" 
+                              accept=".json" 
+                              className="hidden" 
+                              onChange={e => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = (evt) => {
+                                  try {
+                                    const parsed = JSON.parse(evt.target.result);
+                                    if (parsed.products) setProducts(parsed.products);
+                                    if (parsed.customers) setCustomers(parsed.customers);
+                                    if (parsed.suppliers) setSuppliers(parsed.suppliers);
+                                    if (parsed.purchases) setPurchases(parsed.purchases);
+                                    if (parsed.payables) setPayables(parsed.payables);
+                                    if (parsed.expenses) setExpenses(parsed.expenses);
+                                    if (parsed.transactions) setTransactions(parsed.transactions);
+                                    if (parsed.profile) setProfile(parsed.profile);
+                                    if (parsed.users) setUsers(parsed.users);
+                                    alert('Data berhasil dipulihkan secara menyeluruh!');
+                                  } catch (err) {
+                                    alert('Gagal memulihkan file backup: Format tidak valid.');
+                                  }
+                                };
+                                reader.readAsText(file);
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* PANEL 4: KUNCI / SEMBUNYIKAN TOMBOL RESET DEMO */}
+                      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                        <div>
+                          <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
+                            <i className="fa-solid fa-lock"></i> Kunci / Sembunyikan Tombol 'Reset Demo' di Header
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Cegah kasir atau staf mengklik reset demo secara tidak sengaja saat toko aktif beroperasi.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setHideResetDemoHeader(!hideResetDemoHeader)}
+                          className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${hideResetDemoHeader ? 'bg-emerald-500' : 'bg-slate-800'}`}
+                        >
+                          <div className={`w-5 h-5 rounded-full bg-white transition-transform ${hideResetDemoHeader ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                        </button>
+                      </div>
+
+                    </div>
+                  )}
                 </div>
               )}
 
             </main>
           </div>
+
+          {/* ======================================================== */}
+          {/* 4. MODAL KONFIRMASI HAPUS MATERIAL / BARANG (BERGARIS MERAH) */}
+          {/* ======================================================== */}
+          {productToDelete && (
+            <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+              <div className="bg-slate-900 border-2 border-rose-500/50 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl shadow-rose-950/60 ring-1 ring-rose-500/30 text-slate-100">
+                <div className="p-5 bg-gradient-to-r from-rose-950/70 via-slate-900 to-slate-900 border-b border-rose-500/30 flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+                    <i className="fa-solid fa-trash-can text-lg animate-pulse"></i>
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base text-white tracking-tight">Hapus Material Bangunan?</h3>
+                    <p className="text-xs text-rose-200/70 mt-0.5">Data master barang ini akan dihapus dari katalog toko.</p>
+                  </div>
+                </div>
+
+                <div className="p-5 space-y-4">
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/90 space-y-2.5">
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-900 text-xs">
+                      <span className="text-slate-400 font-medium">SKU / Kode:</span>
+                      <span className="font-mono text-slate-200 font-bold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{productToDelete.code}</span>
+                    </div>
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-900 text-xs">
+                      <span className="text-slate-400 font-medium">Nama Barang:</span>
+                      <span className="font-bold text-white text-right">{productToDelete.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-900 text-xs">
+                      <span className="text-slate-400 font-medium">Kategori:</span>
+                      <span className="text-emerald-400 font-semibold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">{productToDelete.category}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400 font-medium">Sisa Stok Fisik:</span>
+                      <span className="font-extrabold text-amber-400 bg-amber-950/40 px-2.5 py-0.5 rounded-lg border border-amber-800/40">
+                        {productToDelete.stock} {productToDelete.unit}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setProductToDelete(null)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProducts(products.filter(p => p.id !== productToDelete.id));
+                      setProductToDelete(null);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-rose-950/70 border border-rose-400/50 transition active:scale-95 cursor-pointer"
+                  >
+                    <i className="fa-solid fa-trash text-rose-100"></i>
+                    <span>Ya, Hapus Barang</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ======================================================== */}
           {/* 🖨️ MODAL CETAK STRUK BLUETOOTH & SYSTEM PRINT            */}
@@ -1412,7 +1713,7 @@
                     type="button"
                     disabled={isBluetoothPrinting}
                     onClick={() => printBluetoothESC(printReceipt, printFormat === 'thermal80' ? 80 : 58)} 
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <i className="fa-brands fa-bluetooth text-sm"></i>
                     <span>{isBluetoothPrinting ? 'Mencetak...' : 'Cetak Bluetooth (ESC/POS)'}</span>
@@ -1420,14 +1721,14 @@
                   <button 
                     type="button"
                     onClick={() => printSystemDriver(printFormat)} 
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs cursor-pointer"
                   >
                     Cetak Driver System / PDF
                   </button>
                   <button 
                     type="button"
                     onClick={() => setPrintReceipt(null)} 
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-200 text-slate-800 font-bold text-xs"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer"
                   >
                     Tutup
                   </button>
