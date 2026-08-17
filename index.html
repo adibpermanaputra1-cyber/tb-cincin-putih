@@ -85,6 +85,13 @@
       { id: 'p24', code: 'GBK-02', name: 'Gerobak ISCO PVC 10kg Roda Hidup', category: 'Alat & Perkakas', unit: 'Unit', costPrice: 460000, price: 550000, wholesalePrice: 510000, stock: 12, minStock: 4, location: 'Depan G-02', derivedUnits: [] }
     ];
 
+    const DEFAULT_STOCK_MUTATIONS = [
+      { id: 'mut-1', date: '17/08/2026, 09:30:15', productName: 'Semen Tiga Roda 50kg', type: 'PENJUALAN', initialStock: 220, change: -20, unit: 'Sak', finalStock: 200, refNo: 'INV-882190', note: 'Penjualan Kasir POS Mandor Proyek', user: 'Pak Ahmad & Buk Maesaroh (Owner)' },
+      { id: 'mut-2', date: '17/08/2026, 09:30:15', productName: 'Paku 1 1/2" - 5" Standar', type: 'PENJUALAN', initialStock: 125, change: -5, unit: 'Kg', finalStock: 120, refNo: 'INV-882190', note: 'Penjualan Kasir POS Mandor Proyek', user: 'Pak Ahmad & Buk Maesaroh (Owner)' },
+      { id: 'mut-3', date: '16/08/2026, 14:15:00', productName: 'Kawat Beton Ikat 5.6 kg', type: 'PEMBELIAN_PO', initialStock: 20, change: 20, unit: 'Rol', finalStock: 40, refNo: 'PO-2026-0801', note: 'Penerimaan Stok Masuk Distributor', user: 'Supriyadi (Gudang)' },
+      { id: 'mut-4', date: '16/08/2026, 11:00:20', productName: 'Triplek 3 mm (122x244)', type: 'PENYESUAIAN_PLUS', initialStock: 95, change: 5, unit: 'Lembar', finalStock: 100, refNo: 'ADJ-1029', note: 'Koreksi Stok Opname Gudang', user: 'Pak Ahmad & Buk Maesaroh (Owner)' }
+    ];
+
     const DEFAULT_CUSTOMERS = [
       { id: 'c1', name: 'Pembeli Umum', phone: '-', debt: 0, address: 'Pelanggan Langsung Toko' },
       { id: 'c2', name: 'Pak Haji Rahmat (Mandor Proyek)', phone: '0812-9988-7711', debt: 1850000, address: 'Proyek Ruko Permai Blok C' },
@@ -185,7 +192,7 @@
       addText('*** NOTA RESMI PENJUALAN ***\n');
       addText('-'.repeat(maxChars) + '\n');
 
-      // Metadata Transaksi (Align Left)
+      // Metadata Transaksi
       addRaw([ESC, 0x61, 0x00]);
       addText(`No.Nota: ${receipt.id}\n`);
       addText(`Tanggal: ${receipt.date}\n`);
@@ -206,14 +213,14 @@
 
       addText('-'.repeat(maxChars) + '\n');
 
-      // Total & Bayar (Align Right)
+      // Total & Bayar
       addRaw([ESC, 0x61, 0x02]);
       if (receipt.discount > 0) {
         addText(`Diskon: -Rp ${receipt.discount.toLocaleString('id-ID')}\n`);
       }
-      addRaw([ESC, 0x45, 0x01]); // Bold ON
+      addRaw([ESC, 0x45, 0x01]);
       addText(`TOTAL: Rp ${receipt.total.toLocaleString('id-ID')}\n`);
-      addRaw([ESC, 0x45, 0x00]); // Bold OFF
+      addRaw([ESC, 0x45, 0x00]);
       addText(`Metode: ${receipt.paymentMethod}\n`);
       if (receipt.paymentMethod === 'Tunai') {
         addText(`Bayar : Rp ${(receipt.paid || receipt.total).toLocaleString('id-ID')}\n`);
@@ -246,6 +253,8 @@
       const [loginPin, setLoginPin] = useState('');
       const [currentTab, setCurrentTab] = useState('dashboard');
       const [settingsSubTab, setSettingsSubTab] = useState('bank');
+      const [inventorySubTab, setInventorySubTab] = useState('catalog'); // 'catalog' | 'ledger'
+      const [ledgerMaterialFilter, setLedgerMaterialFilter] = useState('Semua');
       const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
       const [hideResetDemoHeader, setHideResetDemoHeader] = useState(() => {
         return localStorage.getItem('tb_hide_reset_demo_btn') === 'true';
@@ -255,6 +264,10 @@
       const [products, setProducts] = useState(() => {
         const saved = localStorage.getItem('tb_enterprise_products_v1');
         return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
+      });
+      const [mutations, setMutations] = useState(() => {
+        const saved = localStorage.getItem('tb_enterprise_mutations_v1');
+        return saved ? JSON.parse(saved) : DEFAULT_STOCK_MUTATIONS;
       });
       const [customers, setCustomers] = useState(() => {
         const saved = localStorage.getItem('tb_enterprise_customers_v1');
@@ -291,6 +304,7 @@
 
       // SYNC LOCALSTORAGE
       useEffect(() => { localStorage.setItem('tb_enterprise_products_v1', JSON.stringify(products)); }, [products]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_mutations_v1', JSON.stringify(mutations)); }, [mutations]);
       useEffect(() => { localStorage.setItem('tb_enterprise_customers_v1', JSON.stringify(customers)); }, [customers]);
       useEffect(() => { localStorage.setItem('tb_enterprise_suppliers_v1', JSON.stringify(suppliers)); }, [suppliers]);
       useEffect(() => { localStorage.setItem('tb_enterprise_purchases_v1', JSON.stringify(purchases)); }, [purchases]);
@@ -317,6 +331,22 @@
 
       // MODAL HAPUS MATERIAL STATE
       const [productToDelete, setProductToDelete] = useState(null);
+
+      // MODAL FORM TAMBAH MATERIAL LENGKAP STATE
+      const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+      const [newProductForm, setNewProductForm] = useState({
+        code: '',
+        name: '',
+        category: 'Semen & Pasir',
+        unit: 'Sak',
+        costPrice: '',
+        price: '',
+        wholesalePrice: '',
+        stock: '',
+        minStock: '10',
+        location: 'Gudang Utama',
+        derivedUnits: []
+      });
 
       // SHORTCUT F2
       useEffect(() => {
@@ -390,9 +420,10 @@
         }
 
         const invoiceId = 'INV-' + Date.now().toString().slice(-6);
+        const nowStr = new Date().toLocaleString('id-ID');
         const newTx = {
           id: invoiceId,
-          date: new Date().toLocaleString('id-ID'),
+          date: nowStr,
           customer: selectedCustomer,
           paymentMethod,
           items: [...cart],
@@ -404,13 +435,34 @@
           profit: cart.reduce((s, it) => s + ((it.activePrice - it.costPrice) * it.qty), 0) - cartDiscount
         };
 
-        // Potong stok material
+        // Buat mutasi kartu stok real-time
+        const newMutations = [];
         setProducts(prev => prev.map(p => {
           const inCart = cart.filter(c => c.id === p.id);
           if (inCart.length === 0) return p;
           const deduct = inCart.reduce((sum, item) => sum + (item.qty * item.multiplier), 0);
-          return { ...p, stock: Math.max(0, p.stock - deduct) };
+          const finalSt = Math.max(0, p.stock - deduct);
+          
+          newMutations.push({
+            id: 'mut-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+            date: nowStr,
+            productName: p.name,
+            type: 'PENJUALAN',
+            initialStock: p.stock,
+            change: -deduct,
+            unit: p.unit,
+            finalStock: finalSt,
+            refNo: invoiceId,
+            note: `Penjualan Kasir POS (${selectedCustomer})`,
+            user: 'Pak Ahmad & Buk Maesaroh (Owner)'
+          });
+
+          return { ...p, stock: finalSt };
         }));
+
+        if (newMutations.length > 0) {
+          setMutations(prev => [...newMutations, ...prev]);
+        }
 
         // Catat kasbon bila tempo
         if (paymentMethod.includes('Tempo') || paymentMethod.includes('Kasbon')) {
@@ -522,7 +574,7 @@
                 </div>
                 <button 
                   type="submit"
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/30 transition-all active:scale-95"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/30 transition-all active:scale-95 cursor-pointer"
                 >
                   MASUK KE SISTEM KASIR
                 </button>
@@ -619,14 +671,14 @@
               </div>
               <button
                 onClick={() => {
-                  const blob = new Blob([JSON.stringify({ profile, products, customers, suppliers, purchases, payables, expenses, transactions, users }, null, 2)], { type: 'application/json' });
+                  const blob = new Blob([JSON.stringify({ profile, products, mutations, customers, suppliers, purchases, payables, expenses, transactions, users }, null, 2)], { type: 'application/json' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
                   a.download = `backup-tb-cincinputih-${new Date().toISOString().split('T')[0]}.json`;
                   a.click();
                 }}
-                className="w-full py-2 px-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                className="w-full py-2 px-3 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <i className="fa-solid fa-file-export"></i> Backup Database (JSON)
               </button>
@@ -665,7 +717,7 @@
                         alert('Data demo keuangan berhasil dipulihkan!');
                       }
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition"
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
                   >
                     <i className="fa-solid fa-rotate-left"></i> Reset Demo
                   </button>
@@ -673,7 +725,7 @@
 
                 <button
                   onClick={() => setCurrentTab('pos')}
-                  className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/20 cursor-pointer"
                 >
                   <i className="fa-solid fa-cash-register"></i> Kasir (F2)
                 </button>
@@ -707,7 +759,7 @@
                     </div>
                     <button
                       onClick={() => setCurrentTab('pos')}
-                      className="px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/30"
+                      className="px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/30 cursor-pointer"
                     >
                       <i className="fa-solid fa-plus"></i> Buka Transaksi Baru
                     </button>
@@ -829,7 +881,7 @@
                           <div className="space-y-1.5 pt-2 border-t border-slate-800">
                             <button
                               onClick={() => addToCart(prod, prod.unit, prod.price, 1)}
-                              className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 border border-emerald-500/30 flex items-center justify-between text-xs font-bold transition-all"
+                              className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 border border-emerald-500/30 flex items-center justify-between text-xs font-bold transition-all cursor-pointer"
                             >
                               <span>1 {prod.unit} (Utama)</span>
                               <span>{formatRupiah(prod.price)}</span>
@@ -839,7 +891,7 @@
                               <button
                                 key={du.id}
                                 onClick={() => addToCart(prod, du.name, du.price, 1 / du.conversionRatio)}
-                                className="w-full py-1.5 px-2.5 rounded-lg bg-slate-950 hover:bg-teal-500 hover:text-slate-950 text-teal-400 border border-slate-800 flex items-center justify-between text-xs font-bold transition-all"
+                                className="w-full py-1.5 px-2.5 rounded-lg bg-slate-950 hover:bg-teal-500 hover:text-slate-950 text-teal-400 border border-slate-800 flex items-center justify-between text-xs font-bold transition-all cursor-pointer"
                               >
                                 <span>1 {du.name} (Eceran)</span>
                                 <span>{formatRupiah(du.price)}</span>
@@ -856,7 +908,7 @@
                       <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
                         <span className="text-sm font-bold text-slate-100">Keranjang Kasir ({cart.reduce((a, b) => a + b.qty, 0)})</span>
                         {cart.length > 0 && (
-                          <button onClick={() => setCart([])} className="text-xs text-rose-400 hover:underline">Kosongkan</button>
+                          <button onClick={() => setCart([])} className="text-xs text-rose-400 hover:underline cursor-pointer">Kosongkan</button>
                         )}
                       </div>
 
@@ -898,9 +950,9 @@
                               <div className="flex items-center justify-between pt-1 border-t border-slate-900">
                                 <span className="text-[10px] text-slate-400">Satuan: <strong>{item.sellingUnit}</strong></span>
                                 <div className="flex items-center gap-1.5">
-                                  <button onClick={() => item.qty > 1 ? setCart(cart.map(c => c.cartKey === item.cartKey ? { ...c, qty: c.qty - 1 } : c)) : setCart(cart.filter(c => c.cartKey !== item.cartKey))} className="w-6 h-6 rounded bg-slate-800 text-xs font-bold">-</button>
+                                  <button onClick={() => item.qty > 1 ? setCart(cart.map(c => c.cartKey === item.cartKey ? { ...c, qty: c.qty - 1 } : c)) : setCart(cart.filter(c => c.cartKey !== item.cartKey))} className="w-6 h-6 rounded bg-slate-800 text-xs font-bold cursor-pointer">-</button>
                                   <span className="w-8 text-center text-xs font-bold">{item.qty}</span>
-                                  <button onClick={() => setCart(cart.map(c => c.cartKey === item.cartKey ? { ...c, qty: c.qty + 1 } : c))} className="w-6 h-6 rounded bg-slate-800 text-xs font-bold">+</button>
+                                  <button onClick={() => setCart(cart.map(c => c.cartKey === item.cartKey ? { ...c, qty: c.qty + 1 } : c))} className="w-6 h-6 rounded bg-slate-800 text-xs font-bold cursor-pointer">+</button>
                                 </div>
                               </div>
                             </div>
@@ -936,7 +988,7 @@
                       <button 
                         onClick={handleCheckout} 
                         disabled={cart.length === 0} 
-                        className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-emerald-500/20"
+                        className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-emerald-500/20 cursor-pointer"
                       >
                         BAYAR & CETAK STRUK RESMI
                       </button>
@@ -946,95 +998,182 @@
               )}
 
               {/* ======================================================== */}
-              {/* 4. INVENTARIS & KARTU STOK MATERIAL                      */}
+              {/* 4 & 6. INVENTARIS & FITUR KARTU STOK (LEDGER) REAL-TIME  */}
               {/* ======================================================== */}
               {currentTab === 'inventory' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-boxes-stacked text-amber-400"></i> Inventaris & Multi-Satuan ({products.length} Material)
-                      </h2>
-                      <p className="text-xs text-slate-400">Atur SKU, HPP modal, harga grosir/eceran, serta satuan turunan.</p>
+                  
+                  {/* HEADER TAB: KATALOG PRODUK vs KARTU STOK (LEDGER) */}
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setInventorySubTab('catalog')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+                          inventorySubTab === 'catalog'
+                            ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                            : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <i className="fa-solid fa-boxes-stacked"></i> Katalog Produk ({products.length})
+                      </button>
+                      <button
+                        onClick={() => setInventorySubTab('ledger')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+                          inventorySubTab === 'ledger'
+                            ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
+                            : 'bg-slate-900 text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        <i className="fa-solid fa-book-bookmark"></i> Kartu Stok (Ledger) Mutasi
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => {
-                        const name = prompt('Nama Material Bangunan Baru:');
-                        if (!name) return;
-                        const price = Number(prompt('Harga Jual Utama (Rp):', '50000')) || 0;
-                        const cost = Number(prompt('Harga Modal / HPP (Rp):', '40000')) || 0;
-                        const unit = prompt('Satuan Utama (Sak / Kg / Lembar / Batang / Rol / Unit):', 'Sak') || 'Sak';
-                        const stock = Number(prompt('Jumlah Stok Awal:', '100')) || 0;
-                        const newProd = {
-                          id: 'p-' + Date.now(),
-                          code: 'MAT-' + Math.floor(1000 + Math.random() * 9000),
-                          name,
-                          category: 'Material Umum',
-                          unit,
-                          costPrice: cost,
-                          price,
-                          wholesalePrice: price,
-                          stock,
-                          minStock: 10,
-                          location: 'Gudang Utama',
-                          derivedUnits: []
-                        };
-                        setProducts([newProd, ...products]);
-                      }}
-                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg"
-                    >
-                      <i className="fa-solid fa-plus"></i> Tambah Material Baru
-                    </button>
+
+                    {inventorySubTab === 'catalog' && (
+                      <button 
+                        onClick={() => {
+                          setNewProductForm({
+                            code: 'MAT-' + Math.floor(1000 + Math.random() * 9000),
+                            name: '',
+                            category: 'Semen & Pasir',
+                            unit: 'Sak',
+                            costPrice: '',
+                            price: '',
+                            wholesalePrice: '',
+                            stock: '',
+                            minStock: '10',
+                            location: 'Gudang Utama',
+                            derivedUnits: []
+                          });
+                          setIsAddProductModalOpen(true);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 cursor-pointer"
+                      >
+                        <i className="fa-solid fa-plus"></i> Tambah Material Lengkap
+                      </button>
+                    )}
                   </div>
 
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
-                    <table className="w-full text-left text-xs text-slate-200">
-                      <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
-                        <tr>
-                          <th className="p-3">SKU</th>
-                          <th className="p-3">Nama Material</th>
-                          <th className="p-3">Kategori</th>
-                          <th className="p-3 text-right">Harga Jual Utama</th>
-                          <th className="p-3">Satuan Turunan</th>
-                          <th className="p-3 text-center">Stok</th>
-                          <th className="p-3 text-center">Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/60">
-                        {products.map(item => (
-                          <tr key={item.id} className="hover:bg-slate-800/40">
-                            <td className="p-3 font-mono text-amber-400 font-bold">{item.code}</td>
-                            <td className="p-3 font-bold text-slate-100">{item.name}</td>
-                            <td className="p-3 text-slate-300">{item.category}</td>
-                            <td className="p-3 text-right font-bold text-emerald-400">{formatRupiah(item.price)} / {item.unit}</td>
-                            <td className="p-3">
-                              {item.derivedUnits && item.derivedUnits.length > 0 ? (
-                                item.derivedUnits.map(du => (
-                                  <span key={du.id} className="inline-block px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-teal-300 mr-1">
-                                    1 {item.unit} = {du.conversionRatio} {du.name} ({formatRupiah(du.price)})
-                                  </span>
-                                ))
-                              ) : <span className="text-slate-500 text-[11px]">-</span>}
-                            </td>
-                            <td className="p-3 text-center">
-                              <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock > (item.minStock || 10) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                                {item.stock} {item.unit}
-                              </span>
-                            </td>
-                            <td className="p-3 text-center">
-                              {/* MEMICU MODAL KONFIRMASI HAPUS MATERIAL */}
-                              <button 
-                                onClick={() => setProductToDelete(item)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
-                              >
-                                <i className="fa-solid fa-trash"></i>
-                              </button>
-                            </td>
+                  {/* SUB-VIEW 1: KATALOG PRODUK */}
+                  {inventorySubTab === 'catalog' && (
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
+                      <table className="w-full text-left text-xs text-slate-200">
+                        <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                          <tr>
+                            <th className="p-3">SKU</th>
+                            <th className="p-3">Nama Material</th>
+                            <th className="p-3">Kategori</th>
+                            <th className="p-3 text-right">Harga Jual Retail</th>
+                            <th className="p-3">Satuan Turunan</th>
+                            <th className="p-3 text-center">Stok</th>
+                            <th className="p-3 text-center">Aksi</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                          {products.map(item => (
+                            <tr key={item.id} className="hover:bg-slate-800/40">
+                              <td className="p-3 font-mono text-amber-400 font-bold">{item.code}</td>
+                              <td className="p-3 font-bold text-slate-100">{item.name}</td>
+                              <td className="p-3 text-slate-300">{item.category}</td>
+                              <td className="p-3 text-right font-bold text-emerald-400">{formatRupiah(item.price)} / {item.unit}</td>
+                              <td className="p-3">
+                                {item.derivedUnits && item.derivedUnits.length > 0 ? (
+                                  item.derivedUnits.map(du => (
+                                    <span key={du.id} className="inline-block px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-teal-300 mr-1 my-0.5">
+                                      1 {item.unit} = {du.conversionRatio} {du.name} ({formatRupiah(du.price)})
+                                    </span>
+                                  ))
+                                ) : <span className="text-slate-500 text-[11px]">-</span>}
+                              </td>
+                              <td className="p-3 text-center">
+                                <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock > (item.minStock || 10) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                                  {item.stock} {item.unit}
+                                </span>
+                              </td>
+                              <td className="p-3 text-center">
+                                {/* MEMICU MODAL KONFIRMASI HAPUS MATERIAL */}
+                                <button 
+                                  onClick={() => setProductToDelete(item)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                                  title="Hapus Material"
+                                >
+                                  <i className="fa-solid fa-trash"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* SUB-VIEW 2: 6. KARTU STOK (LEDGER) MUTASI REAL-TIME */}
+                  {inventorySubTab === 'ledger' && (
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-900 p-3 rounded-2xl border border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <i className="fa-solid fa-filter text-amber-400 text-xs"></i>
+                          <span className="text-xs text-slate-300 font-semibold">Filter Barang Material:</span>
+                          <select 
+                            value={ledgerMaterialFilter} 
+                            onChange={e => setLedgerMaterialFilter(e.target.value)}
+                            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100"
+                          >
+                            <option value="Semua">Semua Material ({products.length} Barang)</option>
+                            {products.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                          </select>
+                        </div>
+                        <span className="text-xs text-slate-400">{mutations.length} riwayat mutasi tercatat</span>
+                      </div>
+
+                      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
+                        <table className="w-full text-left text-xs text-slate-200">
+                          <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                            <tr>
+                              <th className="p-3">Tanggal & Waktu</th>
+                              <th className="p-3">Nama Material</th>
+                              <th className="p-3">Tipe Mutasi</th>
+                              <th className="p-3 text-right">Stok Awal</th>
+                              <th className="p-3 text-center">Perubahan (+/-)</th>
+                              <th className="p-3 text-right">Saldo Akhir</th>
+                              <th className="p-3">No. Referensi</th>
+                              <th className="p-3">Keterangan</th>
+                              <th className="p-3">Petugas</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/60">
+                            {mutations
+                              .filter(m => ledgerMaterialFilter === 'Semua' || m.productName === ledgerMaterialFilter)
+                              .map(mut => (
+                                <tr key={mut.id} className="hover:bg-slate-800/40">
+                                  <td className="p-3 font-mono text-slate-400">{mut.date}</td>
+                                  <td className="p-3 font-bold text-slate-100">{mut.productName}</td>
+                                  <td className="p-3">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                      mut.type === 'PENJUALAN' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                                      mut.type === 'PEMBELIAN_PO' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                      'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    }`}>
+                                      {mut.type}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 text-right text-slate-400">{mut.initialStock} {mut.unit}</td>
+                                  <td className="p-3 text-center font-bold">
+                                    <span className={mut.change < 0 ? 'text-rose-400' : 'text-emerald-400'}>
+                                      {mut.change > 0 ? `+${mut.change}` : mut.change} {mut.unit}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 text-right font-black text-amber-400">{mut.finalStock} {mut.unit}</td>
+                                  <td className="p-3 font-mono text-xs text-slate-300">{mut.refNo}</td>
+                                  <td className="p-3 text-slate-300">{mut.note}</td>
+                                  <td className="p-3 text-slate-400 text-[11px]">{mut.user}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               )}
 
@@ -1068,7 +1207,7 @@
                         setPurchases([newPO, ...purchases]);
                         setPayables([{ id: 'py-' + Date.now(), poNumber: newPO.poNumber, supplierName: sup, totalAmount: total, paidAmount: 0, remainingAmount: total, dueDate: '30 Hari', status: 'Belum Lunas' }, ...payables]);
                       }}
-                      className="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                      className="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-black text-xs flex items-center gap-2 cursor-pointer"
                     >
                       <i className="fa-solid fa-plus"></i> Catat PO Masuk Baru
                     </button>
@@ -1104,7 +1243,7 @@
                                     setPayables(payables.filter(py => py.poNumber !== po.poNumber));
                                   }
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
                               >
                                 <i className="fa-solid fa-trash"></i>
                               </button>
@@ -1151,7 +1290,7 @@
                               alert('Pembayaran cicilan berhasil dicatat!');
                             }
                           }}
-                          className="w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-30 text-white font-bold text-xs"
+                          className="w-full py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-30 text-white font-bold text-xs cursor-pointer"
                         >
                           Catat Bayar Bon
                         </button>
@@ -1198,7 +1337,7 @@
                                       setPayables(payables.map(p => p.id === py.id ? { ...p, remainingAmount: Math.max(0, p.remainingAmount - bayar) } : p));
                                     }
                                   }}
-                                  className="px-2.5 py-1 rounded-lg bg-purple-600 text-white font-bold text-xs"
+                                  className="px-2.5 py-1 rounded-lg bg-purple-600 text-white font-bold text-xs cursor-pointer"
                                 >
                                   Bayar
                                 </button>
@@ -1209,7 +1348,7 @@
                                     setPayables(payables.filter(p => p.id !== py.id));
                                   }
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
                               >
                                 <i className="fa-solid fa-trash"></i>
                               </button>
@@ -1242,7 +1381,7 @@
                         const cat = prompt('Kategori (BBM & Transport / Upah Kuli / Listrik):', 'Operasional');
                         setExpenses([{ id: 'e-' + Date.now(), date: new Date().toISOString().split('T')[0], desc, amount: amt, category: cat || 'Operasional' }, ...expenses]);
                       }}
-                      className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                      className="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-400 text-slate-950 font-black text-xs flex items-center gap-2 cursor-pointer"
                     >
                       <i className="fa-solid fa-plus"></i> Catat Beban Baru
                     </button>
@@ -1273,7 +1412,7 @@
                                     setExpenses(expenses.filter(item => item.id !== e.id));
                                   }
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
                               >
                                 <i className="fa-solid fa-trash"></i>
                               </button>
@@ -1335,7 +1474,7 @@
                         const phone = prompt('Nomor WhatsApp:');
                         setUsers([...users, { id: 'u-' + Date.now(), username: name.toLowerCase().replace(/\s/g, ''), name, role: (role || 'KASIR').toUpperCase(), phone: phone || '-', active: true }]);
                       }}
-                      className="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-black text-xs flex items-center gap-2"
+                      className="px-4 py-2 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-black text-xs flex items-center gap-2 cursor-pointer"
                     >
                       <i className="fa-solid fa-user-plus"></i> Tambah Akun Karyawan
                     </button>
@@ -1364,7 +1503,7 @@
                                 onClick={() => {
                                   if (confirm(`Hapus akun ${u.name}?`)) setUsers(users.filter(item => item.id !== u.id));
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
                               >
                                 <i className="fa-solid fa-trash"></i>
                               </button>
@@ -1378,15 +1517,15 @@
               )}
 
               {/* ======================================================== */}
-              {/* 11. PENGATURAN TOKO & 2. MODUL BACKUP & KEAMANAN LENGKAP */}
+              {/* 11. PENGATURAN TOKO & 2. BACKUP & KEAMANAN LENGKAP       */}
               {/* ======================================================== */}
               {currentTab === 'settings' && (
                 <div className="space-y-4 max-w-4xl mx-auto">
                   <div className="flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
-                    <button onClick={() => setSettingsSubTab('bank')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${settingsSubTab === 'bank' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Rekening Bank & QRIS</button>
-                    <button onClick={() => setSettingsSubTab('profile')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${settingsSubTab === 'profile' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Profil & Kontak Toko</button>
-                    <button onClick={() => setSettingsSubTab('receipt')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${settingsSubTab === 'receipt' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Format Struk & Footer</button>
-                    <button onClick={() => setSettingsSubTab('backup')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 ${settingsSubTab === 'backup' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>
+                    <button onClick={() => setSettingsSubTab('bank')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 cursor-pointer ${settingsSubTab === 'bank' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Rekening Bank & QRIS</button>
+                    <button onClick={() => setSettingsSubTab('profile')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 cursor-pointer ${settingsSubTab === 'profile' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Profil & Kontak Toko</button>
+                    <button onClick={() => setSettingsSubTab('receipt')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 cursor-pointer ${settingsSubTab === 'receipt' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Format Struk & Footer</button>
+                    <button onClick={() => setSettingsSubTab('backup')} className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 cursor-pointer ${settingsSubTab === 'backup' ? 'bg-sky-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>
                       <i className="fa-solid fa-shield-halved mr-1"></i> Backup & Keamanan
                     </button>
                   </div>
@@ -1447,7 +1586,7 @@
                     </div>
                   )}
 
-                  {/* SUB-MENU BACKUP & KEAMANAN LENGKAP SESUAI INSTRUKSI */}
+                  {/* SUB-MENU BACKUP & KEAMANAN LENGKAP */}
                   {settingsSubTab === 'backup' && (
                     <div className="space-y-4">
                       
@@ -1459,7 +1598,7 @@
                               <i className="fa-solid fa-triangle-exclamation"></i> Mulai Pembukaan Baru (Nol-kan Keuangan & Transaksi)
                             </h3>
                             <p className="text-xs text-slate-400 mt-1">
-                              Menghapus seluruh riwayat transaksi penjualan, buku piutang mandor, utang supplier, dan catatan beban. <strong>Data master stok produk/material tetap aman tersimpan.</strong>
+                              Menghapus seluruh riwayat transaksi penjualan, buku piutang mandor, utang supplier, mutasi kasir, dan catatan beban. <strong>Data master stok produk/material tetap aman tersimpan.</strong>
                             </p>
                           </div>
                           <button
@@ -1470,10 +1609,11 @@
                                 setCustomers(customers.map(c => ({ ...c, debt: 0 })));
                                 setPayables([]);
                                 setPurchases([]);
+                                setMutations([]);
                                 alert('Pembukuan baru siap dimulai! Seluruh saldo keuangan telah dinol-kan.');
                               }
                             }}
-                            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shrink-0 shadow-lg shadow-rose-950/50"
+                            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shrink-0 shadow-lg shadow-rose-950/50 cursor-pointer"
                           >
                             Buka Menu Reset
                           </button>
@@ -1488,19 +1628,19 @@
                               <i className="fa-solid fa-cloud-arrow-down"></i> Unduh Cadangan Data (Backup JSON)
                             </h3>
                             <p className="text-xs text-slate-400 mt-1">
-                              Simpan seluruh data katalog barang, riwayat kasir, supplier, kasbon, dan rekening ke dalam 1 file JSON aman di perangkat Anda.
+                              Simpan seluruh data katalog barang, kartu stok mutasi, kasir, supplier, kasbon, dan rekening ke dalam 1 file JSON aman di perangkat Anda.
                             </p>
                           </div>
                           <button
                             onClick={() => {
-                              const blob = new Blob([JSON.stringify({ profile, products, customers, suppliers, purchases, payables, expenses, transactions, users }, null, 2)], { type: 'application/json' });
+                              const blob = new Blob([JSON.stringify({ profile, products, mutations, customers, suppliers, purchases, payables, expenses, transactions, users }, null, 2)], { type: 'application/json' });
                               const url = URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
                               a.download = `backup-tb-cincinputih-${new Date().toISOString().split('T')[0]}.json`;
                               a.click();
                             }}
-                            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs shrink-0 shadow-lg shadow-emerald-950/50"
+                            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs shrink-0 shadow-lg shadow-emerald-950/50 cursor-pointer"
                           >
                             Download Backup Sekarang
                           </button>
@@ -1532,6 +1672,7 @@
                                   try {
                                     const parsed = JSON.parse(evt.target.result);
                                     if (parsed.products) setProducts(parsed.products);
+                                    if (parsed.mutations) setMutations(parsed.mutations);
                                     if (parsed.customers) setCustomers(parsed.customers);
                                     if (parsed.suppliers) setSuppliers(parsed.suppliers);
                                     if (parsed.purchases) setPurchases(parsed.purchases);
@@ -1564,7 +1705,7 @@
                         </div>
                         <button
                           onClick={() => setHideResetDemoHeader(!hideResetDemoHeader)}
-                          className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${hideResetDemoHeader ? 'bg-emerald-500' : 'bg-slate-800'}`}
+                          className={`w-12 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer ${hideResetDemoHeader ? 'bg-emerald-500' : 'bg-slate-800'}`}
                         >
                           <div className={`w-5 h-5 rounded-full bg-white transition-transform ${hideResetDemoHeader ? 'translate-x-6' : 'translate-x-0'}`}></div>
                         </button>
@@ -1579,169 +1720,144 @@
           </div>
 
           {/* ======================================================== */}
-          {/* 4. MODAL KONFIRMASI HAPUS MATERIAL / BARANG (BERGARIS MERAH) */}
+          {/* 5. FORM MODAL TAMBAH MATERIAL LENGKAP                    */}
           {/* ======================================================== */}
-          {productToDelete && (
-            <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-              <div className="bg-slate-900 border-2 border-rose-500/50 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl shadow-rose-950/60 ring-1 ring-rose-500/30 text-slate-100">
-                <div className="p-5 bg-gradient-to-r from-rose-950/70 via-slate-900 to-slate-900 border-b border-rose-500/30 flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
-                    <i className="fa-solid fa-trash-can text-lg animate-pulse"></i>
+          {isAddProductModalOpen && (
+            <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+              <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl text-slate-100 max-h-[95vh] flex flex-col">
+                <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-950/60 via-slate-900 to-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold">
+                      <i className="fa-solid fa-box-open"></i>
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-base text-white">Tambah Material Bangunan Baru</h3>
+                      <p className="text-xs text-slate-400">Isi data katalog produk material lengkap dan multi-satuan.</p>
+                    </div>
                   </div>
+                  <button onClick={() => setIsAddProductModalOpen(false)} className="p-2 text-slate-400 hover:text-white cursor-pointer">
+                    <i className="fa-solid fa-xmark text-lg"></i>
+                  </button>
+                </div>
+
+                <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1 no-scrollbar">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold block mb-1">Kode SKU Material</label>
+                      <input 
+                        type="text" 
+                        value={newProductForm.code} 
+                        onChange={e => setNewProductForm({ ...newProductForm, code: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-amber-400"
+                        placeholder="Contoh: SMN-03"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold block mb-1">Kategori Material</label>
+                      <select 
+                        value={newProductForm.category}
+                        onChange={e => setNewProductForm({ ...newProductForm, category: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200"
+                      >
+                        <option value="Semen & Pasir">Semen & Pasir</option>
+                        <option value="Paku & Baut">Paku & Baut</option>
+                        <option value="Kayu & Triplek">Kayu & Triplek</option>
+                        <option value="Plafon & Partisi">Plafon & Partisi</option>
+                        <option value="Besi & Baja">Besi & Baja</option>
+                        <option value="Atap & Seng">Atap & Seng</option>
+                        <option value="Alat & Perkakas">Alat & Perkakas</option>
+                        <option value="Cat & Kimia">Cat & Kimia</option>
+                        <option value="Pipa & Sanitari">Pipa & Sanitari</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
-                    <h3 className="font-black text-base text-white tracking-tight">Hapus Material Bangunan?</h3>
-                    <p className="text-xs text-rose-200/70 mt-0.5">Data master barang ini akan dihapus dari katalog toko.</p>
+                    <label className="text-xs text-slate-300 font-semibold block mb-1">Nama Lengkap Material</label>
+                    <input 
+                      type="text" 
+                      value={newProductForm.name} 
+                      onChange={e => setNewProductForm({ ...newProductForm, name: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100"
+                      placeholder="Contoh: Semen Holcim Dinamix 50kg"
+                    />
                   </div>
-                </div>
 
-                <div className="p-5 space-y-4">
-                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/90 space-y-2.5">
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-900 text-xs">
-                      <span className="text-slate-400 font-medium">SKU / Kode:</span>
-                      <span className="font-mono text-slate-200 font-bold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{productToDelete.code}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold block mb-1">Satuan Utama (Base)</label>
+                      <input 
+                        type="text" 
+                        value={newProductForm.unit} 
+                        onChange={e => setNewProductForm({ ...newProductForm, unit: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100"
+                        placeholder="Sak, Kg, Lembar, Batang..."
+                      />
                     </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-900 text-xs">
-                      <span className="text-slate-400 font-medium">Nama Barang:</span>
-                      <span className="font-bold text-white text-right">{productToDelete.name}</span>
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold block mb-1">Stok Saat Ini</label>
+                      <input 
+                        type="number" 
+                        value={newProductForm.stock} 
+                        onChange={e => setNewProductForm({ ...newProductForm, stock: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100"
+                        placeholder="0"
+                      />
                     </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-900 text-xs">
-                      <span className="text-slate-400 font-medium">Kategori:</span>
-                      <span className="text-emerald-400 font-semibold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">{productToDelete.category}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400 font-medium">Sisa Stok Fisik:</span>
-                      <span className="font-extrabold text-amber-400 bg-amber-950/40 px-2.5 py-0.5 rounded-lg border border-amber-800/40">
-                        {productToDelete.stock} {productToDelete.unit}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setProductToDelete(null)}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProducts(products.filter(p => p.id !== productToDelete.id));
-                      setProductToDelete(null);
-                    }}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-rose-950/70 border border-rose-400/50 transition active:scale-95 cursor-pointer"
-                  >
-                    <i className="fa-solid fa-trash text-rose-100"></i>
-                    <span>Ya, Hapus Barang</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* 🖨️ MODAL CETAK STRUK BLUETOOTH & SYSTEM PRINT            */}
-          {/* ======================================================== */}
-          {printReceipt && (
-            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4 no-print overflow-y-auto">
-              <div className="bg-white text-slate-900 rounded-2xl p-5 sm:p-6 max-w-lg w-full font-mono text-xs shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
-                
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="font-bold text-slate-800 text-xs">Pilih Ukuran Kertas:</span>
-                  <div className="flex gap-1">
-                    <button type="button" onClick={() => setPrintFormat('thermal58')} className={`px-2.5 py-1 rounded text-xs font-bold ${printFormat === 'thermal58' ? 'bg-slate-950 text-white' : 'bg-slate-200'}`}>Thermal 58mm</button>
-                    <button type="button" onClick={() => setPrintFormat('thermal80')} className={`px-2.5 py-1 rounded text-xs font-bold ${printFormat === 'thermal80' ? 'bg-slate-950 text-white' : 'bg-slate-200'}`}>Thermal 80mm</button>
-                    <button type="button" onClick={() => setPrintFormat('dotmatrix')} className={`px-2.5 py-1 rounded text-xs font-bold ${printFormat === 'dotmatrix' ? 'bg-slate-950 text-white' : 'bg-slate-200'}`}>Dot Matrix / A4</button>
-                  </div>
-                </div>
-
-                {bluetoothStatus && (
-                  <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 text-xs font-semibold flex items-center gap-2 animate-pulse">
-                    <i className="fa-brands fa-bluetooth text-base text-sky-600"></i>
-                    <span>{bluetoothStatus}</span>
-                  </div>
-                )}
-
-                <div id="printable-area" className={`mx-auto bg-white text-black ${printFormat === 'thermal58' ? 'max-w-[54mm]' : printFormat === 'thermal80' ? 'max-w-[76mm]' : 'w-full'}`}>
-                  <div className="text-center border-b border-dashed border-black pb-2 mb-2">
-                    <h2 className="font-black text-xs sm:text-sm uppercase">{profile.name}</h2>
-                    <p className="text-[9px]">{profile.address}</p>
-                    <p className="text-[9px]">Telp/WA: {profile.phone}</p>
-                    <div className="mt-1 font-bold text-[10px] uppercase">*** NOTA RESMI KASIR ***</div>
-                  </div>
-
-                  <div className="flex justify-between text-[9px] mb-1">
-                    <span>No: <strong>{printReceipt.id}</strong></span>
-                    <span>Tgl: {printReceipt.date}</span>
-                  </div>
-                  <div className="text-[9px] mb-2">
-                    <span>Pelanggan: <strong>{printReceipt.customer}</strong></span>
-                  </div>
-
-                  <div className="border-t border-b border-dashed border-black py-1.5 space-y-1.5 my-1">
-                    {printReceipt.items.map((item, i) => (
-                      <div key={i} className="flex justify-between text-[10px] leading-tight">
-                        <div>
-                          <div className="font-bold">{item.name}</div>
-                          <div className="text-[9px] text-gray-700">{item.qty} {item.sellingUnit} x {formatRupiah(item.activePrice)}</div>
-                        </div>
-                        <span className="font-bold">{formatRupiah(item.activePrice * item.qty)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="space-y-1 text-right text-[10px] pt-1">
-                    <div className="flex justify-between font-black text-xs pt-1 border-t border-black">
-                      <span>TOTAL:</span>
-                      <span>{formatRupiah(printReceipt.total)}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-700 text-[9px]">
-                      <span>Metode:</span>
-                      <span>{printReceipt.paymentMethod}</span>
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold block mb-1">Batas Minimum Peringatan</label>
+                      <input 
+                        type="number" 
+                        value={newProductForm.minStock} 
+                        onChange={e => setNewProductForm({ ...newProductForm, minStock: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100"
+                        placeholder="10"
+                      />
                     </div>
                   </div>
 
-                  <div className="text-center text-[8px] text-gray-700 border-t border-dashed border-black pt-2 mt-2 leading-tight">
-                    {profile.footer}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold block mb-1">Harga Beli HPP (Modal)</label>
+                      <input 
+                        type="number" 
+                        value={newProductForm.costPrice} 
+                        onChange={e => setNewProductForm({ ...newProductForm, costPrice: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100"
+                        placeholder="Rp 0"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold block mb-1">Harga Jual Retail</label>
+                      <input 
+                        type="number" 
+                        value={newProductForm.price} 
+                        onChange={e => setNewProductForm({ ...newProductForm, price: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold"
+                        placeholder="Rp 0"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-300 font-semibold block mb-1">Harga Grosir / Tukang</label>
+                      <input 
+                        type="number" 
+                        value={newProductForm.wholesalePrice} 
+                        onChange={e => setNewProductForm({ ...newProductForm, wholesalePrice: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-teal-400"
+                        placeholder="Rp 0"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-200">
-                  <button 
-                    type="button"
-                    disabled={isBluetoothPrinting}
-                    onClick={() => printBluetoothESC(printReceipt, printFormat === 'thermal80' ? 80 : 58)} 
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <i className="fa-brands fa-bluetooth text-sm"></i>
-                    <span>{isBluetoothPrinting ? 'Mencetak...' : 'Cetak Bluetooth (ESC/POS)'}</span>
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => printSystemDriver(printFormat)} 
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs cursor-pointer"
-                  >
-                    Cetak Driver System / PDF
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => setPrintReceipt(null)} 
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer"
-                  >
-                    Tutup
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+                  <div>
+                    <label className="text-xs text-slate-300 font-semibold block mb-1">Lokasi Rak / Gudang</label>
+                    <input 
+                      type="text" 
+                      value={newProductForm.location} 
+                      onChange={e => setNewProductForm({ ...newProductForm, location: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100"
+                      placeholder="Contoh: Gudang A-03 / Rak Besi C-02"
+                    />
+                  </div>
 
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
-</body>
-</html>
+                  {
