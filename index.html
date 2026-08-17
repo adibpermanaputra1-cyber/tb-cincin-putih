@@ -3,21 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TB. CINCIN PUTIH - Sistem Manajemen Toko Bangunan & Kasir POS</title>
+  <title>TB. CINCIN PUTIH - Sistem Enterprise Manajemen Toko Bangunan & Kasir POS</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- React 18, ReactDOM, Babel CDN -->
+  <!-- React 18, ReactDOM, Babel Standalone CDN -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- Font Awesome Pro Icons -->
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style id="dynamic-print-style">
-    /* Gaya CSS Cetak Standar */
     @media print {
       html, body {
         background: #ffffff !important;
@@ -56,140 +55,75 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef } = React;
 
-    // --- 24 MASTER DATA MATERIAL DENGAN MULTI-SATUAN ---
+    // ==========================================
+    // 📦 DATA DEFAULT INITIAL STORAGE (24 ITEM)
+    // ==========================================
     const DEFAULT_PRODUCTS = [
-      { 
-        id: 'p1', 
-        name: 'Semen Tiga Roda 50kg', 
-        category: 'Semen & Pasir', 
-        price: 95000, 
-        wholesalePrice: 92000, 
-        costPrice: 85000, 
-        stock: 200, 
-        minStock: 25, 
-        unit: 'Sak', 
-        code: 'SMN-01', 
-        location: 'Gudang Utama A-01', 
-        derivedUnits: [
-          { id: 'u1-1', name: 'Kg (Eceran)', conversionRatio: 50, price: 2500 }
-        ],
-        image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400' 
-      },
-      { 
-        id: 'p2', 
-        name: 'Semen Rajawali 40kg', 
-        category: 'Semen & Pasir', 
-        price: 82000, 
-        wholesalePrice: 79000, 
-        costPrice: 74000, 
-        stock: 150, 
-        minStock: 20, 
-        unit: 'Sak', 
-        code: 'SMN-02', 
-        location: 'Gudang Utama A-02', 
-        derivedUnits: [
-          { id: 'u2-1', name: 'Kg (Eceran)', conversionRatio: 40, price: 2400 }
-        ],
-        image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400' 
-      },
-      { 
-        id: 'p3', 
-        name: 'Paku 1" (Kayu Halus)', 
-        category: 'Paku & Baut', 
-        price: 30000, 
-        wholesalePrice: 28000, 
-        costPrice: 24000, 
-        stock: 80, 
-        minStock: 15, 
-        unit: 'Kg', 
-        code: 'PKU-01', 
-        location: 'Rak Besi B-01', 
-        derivedUnits: [
-          { id: 'u3-1', name: 'Ons (1/10 Kg)', conversionRatio: 10, price: 3500 },
-          { id: 'u3-2', name: '1/2 Kg', conversionRatio: 2, price: 16000 }
-        ],
-        image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' 
-      },
-      { 
-        id: 'p4', 
-        name: 'Paku 1 1/2" - 5" Standar', 
-        category: 'Paku & Baut', 
-        price: 25000, 
-        wholesalePrice: 23000, 
-        costPrice: 20000, 
-        stock: 120, 
-        minStock: 25, 
-        unit: 'Kg', 
-        code: 'PKU-02', 
-        location: 'Rak Besi B-02', 
-        derivedUnits: [
-          { id: 'u4-1', name: 'Ons (1/10 Kg)', conversionRatio: 10, price: 3000 },
-          { id: 'u4-2', name: 'Dus (25 Kg)', conversionRatio: 0.04, price: 575000 }
-        ],
-        image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' 
-      },
-      { id: 'p5', name: 'Paku Seng Putih Payung', category: 'Paku & Baut', price: 35000, wholesalePrice: 32000, costPrice: 28000, stock: 60, minStock: 10, unit: 'Kg', code: 'PKU-03', location: 'Rak Besi B-03', derivedUnits: [], image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
-      { id: 'p6', name: 'Paku Seng Warna 2"-5"', category: 'Paku & Baut', price: 45000, wholesalePrice: 42000, costPrice: 36000, stock: 50, minStock: 10, unit: 'Kg', code: 'PKU-04', location: 'Rak Besi B-04', derivedUnits: [], image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
-      { id: 'p7', name: 'Paku Berlian Beton', category: 'Paku & Baut', price: 35000, wholesalePrice: 31000, costPrice: 27000, stock: 70, minStock: 15, unit: 'Kg', code: 'PKU-05', location: 'Rak Besi B-05', derivedUnits: [{ id: 'u7-1', name: 'Kotak (50 Biji)', conversionRatio: 4, price: 10000 }], image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
-      { id: 'p8', name: 'Triplek 3 mm (122x244)', category: 'Kayu & Triplek', price: 60000, wholesalePrice: 57000, costPrice: 48000, stock: 100, minStock: 20, unit: 'Lembar', code: 'TPL-03', location: 'Gudang Kayu C-01', derivedUnits: [], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
-      { id: 'p9', name: 'Triplek 6 mm (122x244)', category: 'Kayu & Triplek', price: 110000, wholesalePrice: 105000, costPrice: 90000, stock: 80, minStock: 15, unit: 'Lembar', code: 'TPL-06', location: 'Gudang Kayu C-02', derivedUnits: [], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
-      { id: 'p10', name: 'Triplek 9 mm (122x244)', category: 'Kayu & Triplek', price: 150000, wholesalePrice: 145000, costPrice: 125000, stock: 60, minStock: 10, unit: 'Lembar', code: 'TPL-09', location: 'Gudang Kayu C-03', derivedUnits: [], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
-      { id: 'p11', name: 'Triplek 12 mm (122x244)', category: 'Kayu & Triplek', price: 210000, wholesalePrice: 200000, costPrice: 175000, stock: 45, minStock: 10, unit: 'Lembar', code: 'TPL-12', location: 'Gudang Kayu C-04', derivedUnits: [], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
-      { id: 'p12', name: 'GRC Board 4mm Standar', category: 'Plafon & Partisi', price: 75000, wholesalePrice: 71000, costPrice: 62000, stock: 90, minStock: 15, unit: 'Lembar', code: 'GRC-01', location: 'Gudang Plafon D-01', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p13', name: 'Gypsum Board 9mm Elephant', category: 'Plafon & Partisi', price: 85000, wholesalePrice: 80000, costPrice: 70000, stock: 75, minStock: 15, unit: 'Lembar', code: 'GPS-01', location: 'Gudang Plafon D-02', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p14', name: 'Lisplang GRC Urat Kayu 4m', category: 'Plafon & Partisi', price: 75000, wholesalePrice: 70000, costPrice: 60000, stock: 85, minStock: 15, unit: 'Batang', code: 'LSP-01', location: 'Gudang Plafon D-03', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { 
-        id: 'p15', 
-        name: 'Kawat Beton Ikat 5.6 kg', 
-        category: 'Besi & Baja', 
-        price: 130000, 
-        wholesalePrice: 122000, 
-        costPrice: 110000, 
-        stock: 40, 
-        minStock: 10, 
-        unit: 'Rol', 
-        code: 'KWT-01', 
-        location: 'Gudang Besi E-01', 
-        derivedUnits: [
-          { id: 'u15-1', name: 'Kg (Eceran)', conversionRatio: 5.6, price: 26000 }
-        ],
-        image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' 
-      },
-      { id: 'p16', name: 'Kawat Simpai 10 kg', category: 'Besi & Baja', price: 230000, wholesalePrice: 215000, costPrice: 195000, stock: 35, minStock: 8, unit: 'Rol', code: 'KWT-02', location: 'Gudang Besi E-02', derivedUnits: [{ id: 'u16-1', name: 'Kg (Eceran)', conversionRatio: 10, price: 25000 }], image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' },
-      { id: 'p17', name: 'Kawat Simpai 12 kg', category: 'Besi & Baja', price: 270000, wholesalePrice: 255000, costPrice: 230000, stock: 30, minStock: 8, unit: 'Rol', code: 'KWT-03', location: 'Gudang Besi E-03', derivedUnits: [{ id: 'u17-1', name: 'Kg (Eceran)', conversionRatio: 12, price: 25000 }], image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' },
-      { id: 'p18', name: 'Seng Merah ECO 0.25mm 8 Kaki', category: 'Atap & Seng', price: 52000, wholesalePrice: 48000, costPrice: 42000, stock: 120, minStock: 25, unit: 'Lembar', code: 'SNG-01', location: 'Gudang Atap F-01', derivedUnits: [{ id: 'u18-1', name: 'Kodi (20 Lembar)', conversionRatio: 0.05, price: 980000 }], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p19', name: 'Seng Biru ECO 0.25mm 8 Kaki', category: 'Atap & Seng', price: 52000, wholesalePrice: 48000, costPrice: 42000, stock: 110, minStock: 25, unit: 'Lembar', code: 'SNG-02', location: 'Gudang Atap F-02', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p20', name: 'Seng Kingkong Merah 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 95, minStock: 20, unit: 'Lembar', code: 'SNG-03', location: 'Gudang Atap F-03', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p21', name: 'Seng Kingkong Biru 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 90, minStock: 20, unit: 'Lembar', code: 'SNG-04', location: 'Gudang Atap F-04', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p22', name: 'Seng Kingkong Navy 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 80, minStock: 20, unit: 'Lembar', code: 'SNG-05', location: 'Gudang Atap F-05', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p23', name: 'Gerobak Sorong ISCO Plat Tebal', category: 'Alat & Perkakas', price: 420000, wholesalePrice: 395000, costPrice: 350000, stock: 15, minStock: 5, unit: 'Unit', code: 'GBK-01', location: 'Area Depan G-01', derivedUnits: [], image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400' },
-      { id: 'p24', name: 'Gerobak ISCO PVC 10kg Roda Hidup', category: 'Alat & Perkakas', price: 550000, wholesalePrice: 510000, costPrice: 460000, stock: 12, minStock: 4, unit: 'Unit', code: 'GBK-02', location: 'Area Depan G-02', derivedUnits: [], image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400' }
+      { id: 'p1', code: 'SMN-01', name: 'Semen Tiga Roda 50kg', category: 'Semen & Pasir', unit: 'Sak', costPrice: 85000, price: 95000, wholesalePrice: 92000, stock: 200, minStock: 25, location: 'Gudang A-01', derivedUnits: [{ id: 'u1', name: 'Kg (Eceran)', conversionRatio: 50, price: 2500 }] },
+      { id: 'p2', code: 'SMN-02', name: 'Semen Rajawali 40kg', category: 'Semen & Pasir', unit: 'Sak', costPrice: 74000, price: 82000, wholesalePrice: 79000, stock: 150, minStock: 20, location: 'Gudang A-02', derivedUnits: [{ id: 'u2', name: 'Kg (Eceran)', conversionRatio: 40, price: 2400 }] },
+      { id: 'p3', code: 'PKU-01', name: 'Paku 1" Kayu Halus', category: 'Paku & Baut', unit: 'Kg', costPrice: 24000, price: 30000, wholesalePrice: 28000, stock: 80, minStock: 15, location: 'Rak Besi B-01', derivedUnits: [{ id: 'u3', name: 'Ons', conversionRatio: 10, price: 3500 }] },
+      { id: 'p4', code: 'PKU-02', name: 'Paku 1 1/2" - 5" Standar', category: 'Paku & Baut', unit: 'Kg', costPrice: 20000, price: 25000, wholesalePrice: 23000, stock: 120, minStock: 25, location: 'Rak Besi B-02', derivedUnits: [{ id: 'u4', name: 'Dus (25 Kg)', conversionRatio: 0.04, price: 575000 }] },
+      { id: 'p5', code: 'PKU-03', name: 'Paku Seng Putih Payung', category: 'Paku & Baut', unit: 'Kg', costPrice: 28000, price: 35000, wholesalePrice: 32000, stock: 60, minStock: 10, location: 'Rak Besi B-03', derivedUnits: [] },
+      { id: 'p6', code: 'PKU-04', name: 'Paku Seng Warna 2"-5"', category: 'Paku & Baut', unit: 'Kg', costPrice: 36000, price: 45000, wholesalePrice: 42000, stock: 50, minStock: 10, location: 'Rak Besi B-04', derivedUnits: [] },
+      { id: 'p7', code: 'PKU-05', name: 'Paku Berlian Beton', category: 'Paku & Baut', unit: 'Kg', costPrice: 27000, price: 35000, wholesalePrice: 31000, stock: 70, minStock: 15, location: 'Rak Besi B-05', derivedUnits: [{ id: 'u7', name: 'Kotak (50 Pcs)', conversionRatio: 4, price: 10000 }] },
+      { id: 'p8', code: 'TPL-03', name: 'Triplek 3 mm (122x244)', category: 'Kayu & Triplek', unit: 'Lembar', costPrice: 48000, price: 60000, wholesalePrice: 57000, stock: 100, minStock: 20, location: 'Gudang C-01', derivedUnits: [] },
+      { id: 'p9', code: 'TPL-06', name: 'Triplek 6 mm (122x244)', category: 'Kayu & Triplek', unit: 'Lembar', costPrice: 90000, price: 110000, wholesalePrice: 105000, stock: 80, minStock: 15, location: 'Gudang C-02', derivedUnits: [] },
+      { id: 'p10', code: 'TPL-09', name: 'Triplek 9 mm (122x244)', category: 'Kayu & Triplek', unit: 'Lembar', costPrice: 125000, price: 150000, wholesalePrice: 145000, stock: 60, minStock: 10, location: 'Gudang C-03', derivedUnits: [] },
+      { id: 'p11', code: 'TPL-12', name: 'Triplek 12 mm (122x244)', category: 'Kayu & Triplek', unit: 'Lembar', costPrice: 175000, price: 210000, wholesalePrice: 200000, stock: 45, minStock: 10, location: 'Gudang C-04', derivedUnits: [] },
+      { id: 'p12', code: 'GRC-01', name: 'GRC Board 4mm Standar', category: 'Plafon & Partisi', unit: 'Lembar', costPrice: 62000, price: 75000, wholesalePrice: 71000, stock: 90, minStock: 15, location: 'Gudang D-01', derivedUnits: [] },
+      { id: 'p13', code: 'GPS-01', name: 'Gypsum Board 9mm Elephant', category: 'Plafon & Partisi', unit: 'Lembar', costPrice: 70000, price: 85000, wholesalePrice: 80000, stock: 75, minStock: 15, location: 'Gudang D-02', derivedUnits: [] },
+      { id: 'p14', code: 'LSP-01', name: 'Lisplang GRC Urat Kayu 4m', category: 'Plafon & Partisi', unit: 'Batang', costPrice: 60000, price: 75000, wholesalePrice: 70000, stock: 85, minStock: 15, location: 'Gudang D-03', derivedUnits: [] },
+      { id: 'p15', code: 'KWT-01', name: 'Kawat Beton Ikat 5.6 kg', category: 'Besi & Baja', unit: 'Rol', costPrice: 110000, price: 130000, wholesalePrice: 122000, stock: 40, minStock: 10, location: 'Gudang E-01', derivedUnits: [{ id: 'u15', name: 'Kg (Eceran)', conversionRatio: 5.6, price: 26000 }] },
+      { id: 'p16', code: 'KWT-02', name: 'Kawat Simpai 10 kg', category: 'Besi & Baja', unit: 'Rol', costPrice: 195000, price: 230000, wholesalePrice: 215000, stock: 35, minStock: 8, location: 'Gudang E-02', derivedUnits: [{ id: 'u16', name: 'Kg (Eceran)', conversionRatio: 10, price: 25000 }] },
+      { id: 'p17', code: 'KWT-03', name: 'Kawat Simpai 12 kg', category: 'Besi & Baja', unit: 'Rol', costPrice: 230000, price: 270000, wholesalePrice: 255000, stock: 30, minStock: 8, location: 'Gudang E-03', derivedUnits: [{ id: 'u17', name: 'Kg (Eceran)', conversionRatio: 12, price: 25000 }] },
+      { id: 'p18', code: 'SNG-01', name: 'Seng Merah ECO 0.25mm 8 Kaki', category: 'Atap & Seng', unit: 'Lembar', costPrice: 42000, price: 52000, wholesalePrice: 48000, stock: 120, minStock: 25, location: 'Gudang F-01', derivedUnits: [{ id: 'u18', name: 'Kodi (20 Lembar)', conversionRatio: 0.05, price: 980000 }] },
+      { id: 'p19', code: 'SNG-02', name: 'Seng Biru ECO 0.25mm 8 Kaki', category: 'Atap & Seng', unit: 'Lembar', costPrice: 42000, price: 52000, wholesalePrice: 48000, stock: 110, minStock: 25, location: 'Gudang F-02', derivedUnits: [] },
+      { id: 'p20', code: 'SNG-03', name: 'Seng Kingkong Merah 0.30mm 8 Kaki', category: 'Atap & Seng', unit: 'Lembar', costPrice: 45000, price: 55000, wholesalePrice: 51000, stock: 95, minStock: 20, location: 'Gudang F-03', derivedUnits: [] },
+      { id: 'p21', code: 'SNG-04', name: 'Seng Kingkong Biru 0.30mm 8 Kaki', category: 'Atap & Seng', unit: 'Lembar', costPrice: 45000, price: 55000, wholesalePrice: 51000, stock: 90, minStock: 20, location: 'Gudang F-04', derivedUnits: [] },
+      { id: 'p22', code: 'SNG-05', name: 'Seng Kingkong Navy 0.30mm 8 Kaki', category: 'Atap & Seng', unit: 'Lembar', costPrice: 45000, price: 55000, wholesalePrice: 51000, stock: 80, minStock: 20, location: 'Gudang F-05', derivedUnits: [] },
+      { id: 'p23', code: 'GBK-01', name: 'Gerobak Sorong ISCO Plat Tebal', category: 'Alat & Perkakas', unit: 'Unit', costPrice: 350000, price: 420000, wholesalePrice: 395000, stock: 15, minStock: 5, location: 'Depan G-01', derivedUnits: [] },
+      { id: 'p24', code: 'GBK-02', name: 'Gerobak ISCO PVC 10kg Roda Hidup', category: 'Alat & Perkakas', unit: 'Unit', costPrice: 460000, price: 550000, wholesalePrice: 510000, stock: 12, minStock: 4, location: 'Depan G-02', derivedUnits: [] }
     ];
 
     const DEFAULT_CUSTOMERS = [
       { id: 'c1', name: 'Pembeli Umum', phone: '-', debt: 0, address: 'Pelanggan Langsung Toko' },
-      { id: 'c2', name: 'Pak Haji Rahmat (Mandor)', phone: '0812-9988-7711', debt: 1850000, address: 'Proyek Ruko Permai Blok C' },
+      { id: 'c2', name: 'Pak Haji Rahmat (Mandor Proyek)', phone: '0812-9988-7711', debt: 1850000, address: 'Proyek Ruko Permai Blok C' },
       { id: 'c3', name: 'Proyek Perumahan Grand Cikarang', phone: '0813-4455-6677', debt: 8750000, address: 'Jl. Boulevard Utama Kav. 12' },
       { id: 'c4', name: 'Tukang Slamet', phone: '0857-1122-3344', debt: 340000, address: 'Kp. Cincin Putih RT 02/04' }
     ];
 
     const DEFAULT_SUPPLIERS = [
-      { id: 's1', name: 'PT. Indocement Tunggal Prakarsa', phone: '021-889977', payable: 0, material: 'Semen Tiga Roda' },
-      { id: 's2', name: 'Distributor Baja & Kawat Bekasi', phone: '0811-2233-44', payable: 4500000, material: 'Kawat & Paku' },
-      { id: 's3', name: 'Pabrik Seng & Asbes Kingkong', phone: '021-554433', payable: 6200000, material: 'Seng Gelombang' }
+      { id: 's1', name: 'PT. Indocement Tunggal Prakarsa', phone: '021-889977', payable: 0, material: 'Semen Tiga Roda & Rajawali' },
+      { id: 's2', name: 'Distributor Baja & Kawat Bekasi', phone: '0811-2233-44', payable: 4500000, material: 'Kawat Beton, Simpai, Paku' },
+      { id: 's3', name: 'Pabrik Seng & Asbes Kingkong', phone: '021-554433', payable: 6200000, material: 'Seng Gelombang & Nok' }
     ];
 
-    const DEFAULT_EMPLOYEES = [
-      { id: 'e1', name: 'Budi Santoso', role: 'Kasir Utama', phone: '0812-1111-2222', salary: 3500000, status: 'Aktif' },
-      { id: 'e2', name: 'Supriyadi', role: 'Kepala Gudang & Muat', phone: '0813-2222-3333', salary: 3200000, status: 'Aktif' },
-      { id: 'e3', name: 'Rahmat Hidayat', role: 'Supir Truk Ekspedisi', phone: '0856-3333-4444', salary: 3000000, status: 'Aktif' }
+    const DEFAULT_PURCHASES = [
+      { id: 'po-1', poNumber: 'PO-2026-0801', date: '16/08/2026', supplierName: 'Distributor Baja & Kawat Bekasi', totalAmount: 4500000, paymentStatus: 'Tempo (Utang)', paymentMethod: 'Tempo', receivedBy: 'Supriyadi (Gudang)' },
+      { id: 'po-2', poNumber: 'PO-2026-0802', date: '17/08/2026', supplierName: 'Pabrik Seng & Asbes Kingkong', totalAmount: 6200000, paymentStatus: 'Tempo (Utang)', paymentMethod: 'Tempo', receivedBy: 'Budi Santoso (Kasir)' }
+    ];
+
+    const DEFAULT_PAYABLES = [
+      { id: 'py-1', poNumber: 'PO-2026-0801', supplierName: 'Distributor Baja & Kawat Bekasi', totalAmount: 4500000, paidAmount: 0, remainingAmount: 4500000, dueDate: '30/08/2026', status: 'Belum Lunas' },
+      { id: 'py-2', poNumber: 'PO-2026-0802', supplierName: 'Pabrik Seng & Asbes Kingkong', totalAmount: 6200000, paidAmount: 0, remainingAmount: 6200000, dueDate: '05/09/2026', status: 'Belum Lunas' }
+    ];
+
+    const DEFAULT_USERS = [
+      { id: 'u-1', username: 'owner', name: 'Pak Ahmad Junaidi', role: 'OWNER', phone: '0812-3456-7890', active: true },
+      { id: 'u-2', username: 'kasir1', name: 'Budi Santoso', role: 'KASIR', phone: '0812-1111-2222', active: true },
+      { id: 'u-3', username: 'gudang1', name: 'Supriyadi', role: 'KASIR', phone: '0813-2222-3333', active: true }
+    ];
+
+    const DEFAULT_EXPENSES = [
+      { id: 'e1', date: '2026-08-17', desc: 'Bensin Truk Operasional Pengiriman Semen', amount: 150000, category: 'BBM & Transport' },
+      { id: 'e2', date: '2026-08-16', desc: 'Uang Makan & Lembur Kuli Muat Gudang', amount: 200000, category: 'Upah Kuli' }
     ];
 
     const DEFAULT_TRANSACTIONS = [
       {
         id: 'INV-882190',
         date: '17/08/2026, 09:30:15',
-        customer: 'Pak Haji Rahmat (Mandor)',
+        customer: 'Pak Haji Rahmat (Mandor Proyek)',
         paymentMethod: 'Tempo / Kasbon (Hutang)',
         items: [
           { id: 'p1', name: 'Semen Tiga Roda 50kg', sellingUnit: 'Sak', qty: 20, activePrice: 92000, costPrice: 85000 },
@@ -205,105 +139,93 @@
       }
     ];
 
-    const DEFAULT_EXPENSES = [
-      { id: 'e1', date: '2026-08-17', desc: 'Bensin Truk Operasional Pengiriman Bahan', amount: 150000, category: 'Operasional' }
-    ];
-
-    const CATEGORY_OPTIONS = [
-      'Semen & Pasir', 'Paku & Baut', 'Kayu & Triplek', 'Plafon & Partisi', 
-      'Atap & Seng', 'Besi & Baja', 'Alat & Perkakas', 'Cat & Thinner', 
-      'Plumbing & Pipa', 'Keramik & Granit', 'Lain-lain'
-    ];
-
-    const BASE_UNIT_OPTIONS = [
-      'Sak', 'Kg', 'Lembar', 'Batang', 'Rol', 'Unit', 'Pcs', 'Dus', 'Meter', 'Kaleng', 'Koli', 'Kodi'
-    ];
+    const DEFAULT_PROFILE = {
+      name: 'TB. CINCIN PUTIH',
+      owner: 'Pak Ahmad Junaidi & Buk Maesaroh',
+      phone: '0812-3456-7890 / 0857-7788-9900',
+      address: 'Jl. Cincin Putih Raya No. 88, Cibitung, Bekasi',
+      slogan: 'Pusat Material Bangunan Lengkap, Murah & Berkualitas',
+      bankName: 'BCA (Bank Central Asia)',
+      bankAcc: '8820-192-881',
+      bankHolder: 'TB CINCIN PUTIH / AHMAD JUNAIDI',
+      altBankName: 'MANDIRI',
+      altBankAcc: '156-00-182992-1',
+      altBankHolder: 'AHMAD JUNAIDI',
+      qrisNmid: 'ID1020304050607',
+      footer: 'Barang yang sudah dibeli tidak dapat ditukar/dikembalikan tanpa bukti nota kasir resmi.'
+    };
 
     const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
-    // ========================================================
-    // 🖨️ FUNGSI GENERATOR PERINTAH BINARY ESC/POS UNTUK BLUETOOTH
-    // ========================================================
+    // ==========================================
+    // 🖨️ ESC/POS GENERATOR UNTUK BLUETOOTH THERMAL
+    // ==========================================
     function generateEscPosCommands(receipt, profile, paperWidth = 58) {
       const maxChars = paperWidth === 80 ? 48 : 32;
       const encoder = new TextEncoder();
       const chunks = [];
+      const addRaw = (b) => chunks.push(new Uint8Array(b));
+      const addText = (s) => chunks.push(encoder.encode(s));
 
-      const addRaw = (bytes) => chunks.push(new Uint8Array(bytes));
-      const addText = (str) => chunks.push(encoder.encode(str));
-
-      // ESC/POS Command Constants
       const ESC = 0x1B;
       const GS = 0x1D;
 
-      // Inisialisasi printer & reset setting
-      addRaw([ESC, 0x40]);
+      addRaw([ESC, 0x40]); // Reset
+      addRaw([ESC, 0x61, 0x01]); // Align Center
 
-      // Rata Tengah (Align Center)
-      addRaw([ESC, 0x61, 0x01]);
-
-      // Judul Toko (Bold + Double Height)
+      // Header Toko
       addRaw([ESC, 0x45, 0x01]); // Bold ON
-      addRaw([GS, 0x21, 0x11]);  // Double Height/Width
+      addRaw([GS, 0x21, 0x11]);  // Double Height & Width
       addText((profile.name || 'TB. CINCIN PUTIH') + '\n');
       
-      // Normal Font
-      addRaw([GS, 0x21, 0x00]);  // Normal size
+      addRaw([GS, 0x21, 0x00]);  // Normal
       addRaw([ESC, 0x45, 0x00]); // Bold OFF
-      addText((profile.address || 'Jl. Cincin Putih Raya') + '\n');
+      addText((profile.address || 'Bekasi') + '\n');
       addText('Telp/WA: ' + (profile.phone || '-') + '\n');
-      addText('*** NOTA RESMI KASIR ***\n');
-
-      // Garis Pembatas
+      addText('*** NOTA RESMI PENJUALAN ***\n');
       addText('-'.repeat(maxChars) + '\n');
 
-      // Rata Kiri (Align Left)
+      // Metadata Transaksi (Align Left)
       addRaw([ESC, 0x61, 0x00]);
       addText(`No.Nota: ${receipt.id}\n`);
       addText(`Tanggal: ${receipt.date}\n`);
       addText(`Mandor : ${receipt.customer}\n`);
       addText('-'.repeat(maxChars) + '\n');
 
-      // Rincian Barang
+      // Rincian Item
       receipt.items.forEach((item) => {
-        addRaw([ESC, 0x45, 0x01]); // Bold item name
+        addRaw([ESC, 0x45, 0x01]);
         addText(`${item.name}\n`);
-        addRaw([ESC, 0x45, 0x00]); // Bold OFF
+        addRaw([ESC, 0x45, 0x00]);
 
-        const qtyPrice = `  ${item.qty} ${item.sellingUnit} x ${item.activePrice.toLocaleString('id-ID')}`;
-        const totalItem = (item.qty * item.activePrice).toLocaleString('id-ID');
-        const spaces = Math.max(1, maxChars - qtyPrice.length - totalItem.length);
-        addText(qtyPrice + ' '.repeat(spaces) + totalItem + '\n');
+        const leftStr = `  ${item.qty} ${item.sellingUnit} x ${item.activePrice.toLocaleString('id-ID')}`;
+        const rightStr = (item.qty * item.activePrice).toLocaleString('id-ID');
+        const spaces = Math.max(1, maxChars - leftStr.length - rightStr.length);
+        addText(leftStr + ' '.repeat(spaces) + rightStr + '\n');
       });
 
       addText('-'.repeat(maxChars) + '\n');
 
-      // Bagian Total (Align Right)
-      addRaw([ESC, 0x61, 0x02]); // Align Right
+      // Total & Bayar (Align Right)
+      addRaw([ESC, 0x61, 0x02]);
       if (receipt.discount > 0) {
         addText(`Diskon: -Rp ${receipt.discount.toLocaleString('id-ID')}\n`);
       }
-
       addRaw([ESC, 0x45, 0x01]); // Bold ON
       addText(`TOTAL: Rp ${receipt.total.toLocaleString('id-ID')}\n`);
       addRaw([ESC, 0x45, 0x00]); // Bold OFF
-
       addText(`Metode: ${receipt.paymentMethod}\n`);
       if (receipt.paymentMethod === 'Tunai') {
         addText(`Bayar : Rp ${(receipt.paid || receipt.total).toLocaleString('id-ID')}\n`);
         addText(`Kembali: Rp ${(receipt.change || 0).toLocaleString('id-ID')}\n`);
       }
 
-      // Garis Pembatas & Footer
-      addRaw([ESC, 0x61, 0x01]); // Align Center
+      // Footer
+      addRaw([ESC, 0x61, 0x01]);
       addText('-'.repeat(maxChars) + '\n');
-      addText((profile.footer || 'Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.') + '\n');
-      addText('Terima Kasih Atas Kunjungan Anda\n\n\n');
+      addText((profile.footer || 'Terima kasih atas kunjungan Anda') + '\n\n\n');
+      addRaw([GS, 0x56, 0x41, 0x03]); // Auto-cut
 
-      // Perintah Pemotong Kertas Otomatis (Auto-Cut) & Feed 3 baris
-      addRaw([GS, 0x56, 0x41, 0x03]);
-
-      // Gabungkan seluruh Uint8Array menjadi satu Buffer utuh
       const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
       const combined = new Uint8Array(totalLen);
       let offset = 0;
@@ -314,75 +236,64 @@
       return combined;
     }
 
+    // ==========================================
+    // 🌟 KOMPONEN UTAMA APPLICATION ROOT
+    // ==========================================
     function App() {
-      const [currentTab, setCurrentTab] = useState('inventory');
+      const [currentTab, setCurrentTab] = useState('dashboard');
+      const [settingsSubTab, setSettingsSubTab] = useState('bank');
       const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
       // STATE LOCALSTORAGE
       const [products, setProducts] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_products_v8');
+        const saved = localStorage.getItem('tb_enterprise_products_v1');
         return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
       });
-
       const [customers, setCustomers] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_customers_v8');
+        const saved = localStorage.getItem('tb_enterprise_customers_v1');
         return saved ? JSON.parse(saved) : DEFAULT_CUSTOMERS;
       });
-
       const [suppliers, setSuppliers] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_suppliers_v8');
+        const saved = localStorage.getItem('tb_enterprise_suppliers_v1');
         return saved ? JSON.parse(saved) : DEFAULT_SUPPLIERS;
       });
-
-      const [employees, setEmployees] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_employees_v8');
-        return saved ? JSON.parse(saved) : DEFAULT_EMPLOYEES;
+      const [purchases, setPurchases] = useState(() => {
+        const saved = localStorage.getItem('tb_enterprise_purchases_v1');
+        return saved ? JSON.parse(saved) : DEFAULT_PURCHASES;
       });
-
-      const [transactions, setTransactions] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_transactions_v8');
-        return saved ? JSON.parse(saved) : DEFAULT_TRANSACTIONS;
+      const [payables, setPayables] = useState(() => {
+        const saved = localStorage.getItem('tb_enterprise_payables_v1');
+        return saved ? JSON.parse(saved) : DEFAULT_PAYABLES;
       });
-
       const [expenses, setExpenses] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_expenses_v8');
+        const saved = localStorage.getItem('tb_enterprise_expenses_v1');
         return saved ? JSON.parse(saved) : DEFAULT_EXPENSES;
       });
-
+      const [transactions, setTransactions] = useState(() => {
+        const saved = localStorage.getItem('tb_enterprise_transactions_v1');
+        return saved ? JSON.parse(saved) : DEFAULT_TRANSACTIONS;
+      });
+      const [users, setUsers] = useState(() => {
+        const saved = localStorage.getItem('tb_enterprise_users_v1');
+        return saved ? JSON.parse(saved) : DEFAULT_USERS;
+      });
       const [profile, setProfile] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_profile_v8');
-        return saved ? JSON.parse(saved) : {
-          name: 'TB. CINCIN PUTIH',
-          address: 'Jl. Cincin Putih Raya No. 88, Cibitung, Bekasi',
-          phone: '0812-3456-7890 / 0857-7788-9900',
-          footer: 'Barang yang sudah dibeli tidak dapat ditukar/dikembalikan tanpa bukti nota kasir resmi.'
-        };
+        const saved = localStorage.getItem('tb_enterprise_profile_v1');
+        return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
       });
 
-      // MODAL PRODUK STATE
-      const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-      const [editingProduct, setEditingProduct] = useState(null);
-      const [productFormData, setProductFormData] = useState({
-        code: '',
-        name: '',
-        category: 'Semen & Pasir',
-        unit: 'Sak',
-        costPrice: 0,
-        price: 0,
-        wholesalePrice: 0,
-        stock: 0,
-        minStock: 10,
-        location: '',
-        derivedUnits: [],
-        image: ''
-      });
+      // SYNC STORAGE OTOMATIS
+      useEffect(() => { localStorage.setItem('tb_enterprise_products_v1', JSON.stringify(products)); }, [products]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_customers_v1', JSON.stringify(customers)); }, [customers]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_suppliers_v1', JSON.stringify(suppliers)); }, [suppliers]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_purchases_v1', JSON.stringify(purchases)); }, [purchases]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_payables_v1', JSON.stringify(payables)); }, [payables]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_expenses_v1', JSON.stringify(expenses)); }, [expenses]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_transactions_v1', JSON.stringify(transactions)); }, [transactions]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_users_v1', JSON.stringify(users)); }, [users]);
+      useEffect(() => { localStorage.setItem('tb_enterprise_profile_v1', JSON.stringify(profile)); }, [profile]);
 
-      // INPUT SATUAN TURUNAN DINAMIS
-      const [newDerivedName, setNewDerivedName] = useState('');
-      const [newDerivedRatio, setNewDerivedRatio] = useState('');
-      const [newDerivedPrice, setNewDerivedPrice] = useState('');
-
-      // KASIR POS STATE
+      // KASIR STATE
       const [cart, setCart] = useState([]);
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedCat, setSelectedCat] = useState('Semua');
@@ -390,13 +301,22 @@
       const [paymentMethod, setPaymentMethod] = useState('Tunai');
       const [cashInput, setCashInput] = useState('');
       const [discountPercent, setDiscountPercent] = useState(0);
-      const [taxPercent, setTaxPercent] = useState(0);
 
       // CETAK NOTA STATE
       const [printReceipt, setPrintReceipt] = useState(null);
       const [printFormat, setPrintFormat] = useState('thermal58');
       const [isBluetoothPrinting, setIsBluetoothPrinting] = useState(false);
       const [bluetoothStatus, setBluetoothStatus] = useState('');
+
+      // MODAL MATERIAL STATE
+      const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+      const [editingProduct, setEditingProduct] = useState(null);
+      const [productFormData, setProductFormData] = useState({
+        code: '', name: '', category: 'Semen & Pasir', unit: 'Sak', costPrice: 0, price: 0, wholesalePrice: 0, stock: 0, minStock: 10, location: '', derivedUnits: []
+      });
+      const [newDerivedName, setNewDerivedName] = useState('');
+      const [newDerivedRatio, setNewDerivedRatio] = useState('');
+      const [newDerivedPrice, setNewDerivedPrice] = useState('');
 
       // SHORTCUT F2
       useEffect(() => {
@@ -410,346 +330,44 @@
         return () => window.removeEventListener('keydown', handleKeyDown);
       }, []);
 
-      // SYNC LOCALSTORAGE
-      useEffect(() => { localStorage.setItem('tb_cincinputih_products_v8', JSON.stringify(products)); }, [products]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_customers_v8', JSON.stringify(customers)); }, [customers]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_suppliers_v8', JSON.stringify(suppliers)); }, [suppliers]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_employees_v8', JSON.stringify(employees)); }, [employees]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_transactions_v8', JSON.stringify(transactions)); }, [transactions]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_expenses_v8', JSON.stringify(expenses)); }, [expenses]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_profile_v8', JSON.stringify(profile)); }, [profile]);
+      // METRIK HITUNGAN DASHBOARD & FINANSIAL
+      const totalOmzet = useMemo(() => transactions.reduce((a, b) => a + b.total, 0), [transactions]);
+      const totalLabaKotor = useMemo(() => transactions.reduce((a, b) => a + b.profit, 0), [transactions]);
+      const totalBeban = useMemo(() => expenses.reduce((a, b) => a + b.amount, 0), [expenses]);
+      const totalLabaBersih = useMemo(() => totalLabaKotor - totalBeban, [totalLabaKotor, totalBeban]);
+      const totalPiutang = useMemo(() => customers.reduce((a, b) => a + b.debt, 0), [customers]);
+      const totalUtangUsaha = useMemo(() => payables.reduce((a, b) => a + b.remainingAmount, 0), [payables]);
+      const totalValuasiStok = useMemo(() => products.reduce((a, b) => a + (b.costPrice * b.stock), 0), [products]);
+      const lowStockProducts = useMemo(() => products.filter(p => p.stock <= (p.minStock || 10)), [products]);
 
-      // ========================================================
-      // 🔵 FUNGSI CETAK LANGSUNG VIA WEB BLUETOOTH API ESC/POS
-      // ========================================================
-      const printDirectBluetooth = async (receipt, paperWidth = 58) => {
-        if (!navigator.bluetooth) {
-          alert('Browser Anda belum mendukung Web Bluetooth API. Silakan gunakan Google Chrome di HP Android / Laptop, atau gunakan tombol "Cetak via Driver System".');
-          return;
-        }
-
-        try {
-          setIsBluetoothPrinting(true);
-          setBluetoothStatus('Memindai printer Bluetooth terdekat...');
-
-          // Request Bluetooth Device
-          const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [
-              '000018f0-0000-1000-8000-00805f9b34fb',
-              'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
-              '49535343-fe7d-4ae5-8fa9-9fafd205e455',
-              '0000ff00-0000-1000-8000-00805f9b34fb',
-              '0000fee7-0000-1000-8000-00805f9b34fb'
-            ]
-          });
-
-          setBluetoothStatus(`Menghubungkan ke ${device.name || 'Printer Thermal'}...`);
-          const server = await device.gatt.connect();
-
-          // Cari Service & Karakteristik yang Bisa Ditulis (Write)
-          const services = await server.getPrimaryServices();
-          let writeChar = null;
-
-          for (const service of services) {
-            try {
-              const characteristics = await service.getCharacteristics();
-              for (const c of characteristics) {
-                if (c.properties.write || c.properties.writeWithoutResponse) {
-                  writeChar = c;
-                  break;
-                }
-              }
-              if (writeChar) break;
-            } catch (err) {
-              console.warn('Gagal membaca karakteristik service:', err);
-            }
-          }
-
-          if (!writeChar) {
-            throw new Error('Tidak dapat menemukan jalur pengiriman data (Write Characteristic) pada printer ini.');
-          }
-
-          setBluetoothStatus('Mengirim data struk ESC/POS...');
-          const escPosData = generateEscPosCommands(receipt, profile, paperWidth);
-
-          // Kirim per chunk (512 byte) agar tidak buffer overflow
-          const CHUNK_SIZE = 512;
-          for (let i = 0; i < escPosData.length; i += CHUNK_SIZE) {
-            const slice = escPosData.slice(i, i + CHUNK_SIZE);
-            if (writeChar.writeValueWithoutResponse) {
-              await writeChar.writeValueWithoutResponse(slice);
-            } else {
-              await writeChar.writeValue(slice);
-            }
-          }
-
-          setBluetoothStatus('Struk berhasil dikirim ke printer!');
-          setTimeout(() => {
-            setBluetoothStatus('');
-            setIsBluetoothPrinting(false);
-          }, 1500);
-
-        } catch (error) {
-          console.error('Bluetooth Print Error:', error);
-          alert('Gagal cetak Bluetooth: ' + (error.message || error));
-          setIsBluetoothPrinting(false);
-          setBluetoothStatus('');
-        }
-      };
-
-      // CETAK STANDAR SYSTEM (USB / DRIVER WINDOWS / PDF)
-      const executeSystemPrint = (format) => {
-        const styleEl = document.getElementById('dynamic-print-style');
-        if (styleEl) {
-          if (format === 'thermal58') {
-            styleEl.innerHTML = `
-              @page { size: 58mm auto; margin: 0; }
-              @media print {
-                html, body {
-                  width: 58mm !important;
-                  margin: 0 auto !important;
-                  padding: 0 !important;
-                  background: #fff !important;
-                  color: #000 !important;
-                  font-family: 'Courier New', Courier, monospace !important;
-                  font-size: 11px !important;
-                  line-height: 1.2 !important;
-                }
-                body * { visibility: hidden !important; }
-                #printable-area, #printable-area * { visibility: visible !important; }
-                #printable-area {
-                  position: absolute !important;
-                  left: 0 !important;
-                  top: 0 !important;
-                  width: 54mm !important;
-                  margin: 0 auto !important;
-                  padding: 2mm !important;
-                  box-sizing: border-box !important;
-                }
-              }
-            `;
-          } else if (format === 'thermal80') {
-            styleEl.innerHTML = `
-              @page { size: 80mm auto; margin: 0; }
-              @media print {
-                html, body {
-                  width: 80mm !important;
-                  margin: 0 auto !important;
-                  padding: 0 !important;
-                  background: #fff !important;
-                  color: #000 !important;
-                  font-family: 'Courier New', Courier, monospace !important;
-                  font-size: 12px !important;
-                  line-height: 1.25 !important;
-                }
-                body * { visibility: hidden !important; }
-                #printable-area, #printable-area * { visibility: visible !important; }
-                #printable-area {
-                  position: absolute !important;
-                  left: 0 !important;
-                  top: 0 !important;
-                  width: 76mm !important;
-                  margin: 0 auto !important;
-                  padding: 2mm !important;
-                  box-sizing: border-box !important;
-                }
-              }
-            `;
-          } else {
-            styleEl.innerHTML = `
-              @page { size: A4 portrait; margin: 10mm; }
-              @media print {
-                html, body {
-                  width: 100% !important;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  background: #fff !important;
-                  color: #000 !important;
-                  font-family: 'Courier New', Courier, monospace !important;
-                  font-size: 12px !important;
-                }
-                body * { visibility: hidden !important; }
-                #printable-area, #printable-area * { visibility: visible !important; }
-                #printable-area {
-                  position: absolute !important;
-                  left: 0 !important;
-                  top: 0 !important;
-                  width: 100% !important;
-                  padding: 8px !important;
-                  box-sizing: border-box !important;
-                }
-              }
-            `;
-          }
-        }
-        setTimeout(() => window.print(), 100);
-      };
-
-      // BUKA MODAL TAMBAH
-      const handleOpenAddProductModal = () => {
-        setEditingProduct(null);
-        setProductFormData({
-          code: 'MAT-' + Math.floor(1000 + Math.random() * 9000),
-          name: '',
-          category: 'Semen & Pasir',
-          unit: 'Sak',
-          costPrice: '',
-          price: '',
-          wholesalePrice: '',
-          stock: '',
-          minStock: 10,
-          location: 'Gudang Utama A-01',
-          derivedUnits: [],
-          image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400'
-        });
-        setNewDerivedName('');
-        setNewDerivedRatio('');
-        setNewDerivedPrice('');
-        setIsProductModalOpen(true);
-      };
-
-      // BUKA MODAL EDIT
-      const handleOpenEditProductModal = (product) => {
-        setEditingProduct(product);
-        setProductFormData({
-          code: product.code || '',
-          name: product.name || '',
-          category: product.category || 'Semen & Pasir',
-          unit: product.unit || 'Sak',
-          costPrice: product.costPrice || 0,
-          price: product.price || 0,
-          wholesalePrice: product.wholesalePrice || 0,
-          stock: product.stock || 0,
-          minStock: product.minStock || 10,
-          location: product.location || '',
-          derivedUnits: product.derivedUnits ? [...product.derivedUnits] : [],
-          image: product.image || 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400'
-        });
-        setNewDerivedName('');
-        setNewDerivedRatio('');
-        setNewDerivedPrice('');
-        setIsProductModalOpen(true);
-      };
-
-      // TAMBAH SATUAN TURUNAN DINAMIS
-      const handleAddDerivedUnit = () => {
-        if (!newDerivedName.trim()) {
-          alert('Masukkan nama satuan turunan (contoh: Kg, Ons, Meter, Pcs)!');
-          return;
-        }
-        if (!newDerivedRatio || Number(newDerivedRatio) <= 0) {
-          alert('Masukkan jumlah konversi (contoh: 50 untuk 1 Sak = 50 Kg)!');
-          return;
-        }
-        if (!newDerivedPrice || Number(newDerivedPrice) <= 0) {
-          alert('Masukkan harga jual untuk satuan turunan ini!');
-          return;
-        }
-
-        const newUnitItem = {
-          id: 'u-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-          name: newDerivedName.trim(),
-          conversionRatio: Number(newDerivedRatio),
-          price: Number(newDerivedPrice)
-        };
-
-        setProductFormData(prev => ({
-          ...prev,
-          derivedUnits: [...prev.derivedUnits, newUnitItem]
-        }));
-
-        setNewDerivedName('');
-        setNewDerivedRatio('');
-        setNewDerivedPrice('');
-      };
-
-      // HAPUS SATUAN TURUNAN
-      const handleRemoveDerivedUnit = (id) => {
-        setProductFormData(prev => ({
-          ...prev,
-          derivedUnits: prev.derivedUnits.filter(u => u.id !== id)
-        }));
-      };
-
-      // SIMPAN DATA PRODUK
-      const handleSaveProductModal = (e) => {
-        e.preventDefault();
-        if (!productFormData.name.trim()) {
-          alert('Nama produk material wajib diisi!');
-          return;
-        }
-
-        const formattedProduct = {
-          id: editingProduct ? editingProduct.id : 'p-' + Date.now(),
-          code: productFormData.code.trim().toUpperCase() || 'MAT-' + Math.floor(100 + Math.random() * 900),
-          name: productFormData.name.trim(),
-          category: productFormData.category,
-          unit: productFormData.unit,
-          costPrice: Number(productFormData.costPrice) || 0,
-          price: Number(productFormData.price) || 0,
-          wholesalePrice: Number(productFormData.wholesalePrice) || Number(productFormData.price) || 0,
-          stock: Number(productFormData.stock) || 0,
-          minStock: Number(productFormData.minStock) || 5,
-          location: productFormData.location.trim() || 'Gudang Utama',
-          derivedUnits: productFormData.derivedUnits,
-          image: productFormData.image.trim() || 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400'
-        };
-
-        if (editingProduct) {
-          setProducts(prev => prev.map(p => p.id === editingProduct.id ? formattedProduct : p));
-        } else {
-          setProducts(prev => [formattedProduct, ...prev]);
-        }
-
-        setIsProductModalOpen(false);
-      };
-
-      // KASIR POS DENGAN MULTI-SATUAN
-      const addToCartWithUnit = (product, chosenUnitName, chosenPrice, baseDeductionMultiplier = 1) => {
+      // KASIR POS HANDLER
+      const addToCart = (product, unitName, unitPrice, multiplier = 1) => {
         if (product.stock <= 0) {
           alert(`Stok ${product.name} habis!`);
           return;
         }
-
-        const cartItemId = `${product.id}-${chosenUnitName}`;
+        const cartKey = `${product.id}-${unitName}`;
         setCart(prev => {
-          const exist = prev.find(item => item.cartItemId === cartItemId);
+          const exist = prev.find(i => i.cartKey === cartKey);
           if (exist) {
-            return prev.map(item => item.cartItemId === cartItemId ? { ...item, qty: item.qty + 1 } : item);
+            return prev.map(i => i.cartKey === cartKey ? { ...i, qty: i.qty + 1 } : i);
           }
-          return [...prev, {
-            ...product,
-            cartItemId,
-            sellingUnit: chosenUnitName,
-            activePrice: chosenPrice,
-            baseDeductionMultiplier,
-            qty: 1
-          }];
+          return [...prev, { ...product, cartKey, sellingUnit: unitName, activePrice: unitPrice, multiplier, qty: 1 }];
         });
       };
 
-      const updateQty = (cartItemId, newQty) => {
-        if (newQty <= 0) {
-          setCart(prev => prev.filter(item => item.cartItemId !== cartItemId));
-          return;
-        }
-        setCart(prev => prev.map(item => item.cartItemId === cartItemId ? { ...item, qty: newQty } : item));
-      };
-
-      const subtotalCart = useMemo(() => cart.reduce((acc, item) => acc + (item.activePrice * item.qty), 0), [cart]);
-      const discountAmount = useMemo(() => (subtotalCart * discountPercent) / 100, [subtotalCart, discountPercent]);
-      const taxAmount = useMemo(() => ((subtotalCart - discountAmount) * taxPercent) / 100, [subtotalCart, discountAmount, taxPercent]);
-      const grandTotal = useMemo(() => subtotalCart - discountAmount + taxAmount, [subtotalCart, discountAmount, taxPercent]);
+      const cartSubtotal = useMemo(() => cart.reduce((a, b) => a + (b.activePrice * b.qty), 0), [cart]);
+      const cartDiscount = useMemo(() => (cartSubtotal * discountPercent) / 100, [cartSubtotal, discountPercent]);
+      const cartGrandTotal = useMemo(() => cartSubtotal - cartDiscount, [cartSubtotal, cartDiscount]);
       const changeAmount = useMemo(() => {
         const cash = Number(cashInput) || 0;
-        return cash >= grandTotal ? cash - grandTotal : 0;
-      }, [cashInput, grandTotal]);
+        return cash >= cartGrandTotal ? cash - cartGrandTotal : 0;
+      }, [cashInput, cartGrandTotal]);
 
       const handleCheckout = () => {
         if (cart.length === 0) return;
-        if (paymentMethod === 'Tunai' && Number(cashInput) < grandTotal && cashInput !== '') {
-          alert('Uang tunai kurang dari total tagihan!');
+        if (paymentMethod === 'Tunai' && Number(cashInput) < cartGrandTotal && cashInput !== '') {
+          alert('Nominal tunai kurang dari total tagihan!');
           return;
         }
 
@@ -760,25 +378,25 @@
           customer: selectedCustomer,
           paymentMethod,
           items: [...cart],
-          subtotal: subtotalCart,
-          discount: discountAmount,
-          tax: taxAmount,
-          total: grandTotal,
-          paid: paymentMethod === 'Tunai' ? (Number(cashInput) || grandTotal) : grandTotal,
+          subtotal: cartSubtotal,
+          discount: cartDiscount,
+          total: cartGrandTotal,
+          paid: paymentMethod === 'Tunai' ? (Number(cashInput) || cartGrandTotal) : cartGrandTotal,
           change: paymentMethod === 'Tunai' ? changeAmount : 0,
-          profit: cart.reduce((sum, it) => sum + ((it.activePrice - it.costPrice) * it.qty), 0) - discountAmount
+          profit: cart.reduce((s, it) => s + ((it.activePrice - it.costPrice) * it.qty), 0) - cartDiscount
         };
 
-        // Potong Stok
-        setProducts(prev => prev.map(prod => {
-          const itemsOfThisProd = cart.filter(c => c.id === prod.id);
-          if (itemsOfThisProd.length === 0) return prod;
-          const totalDeduction = itemsOfThisProd.reduce((sum, it) => sum + (it.qty * it.baseDeductionMultiplier), 0);
-          return { ...prod, stock: Math.max(0, prod.stock - totalDeduction) };
+        // Potong stok produk
+        setProducts(prev => prev.map(p => {
+          const inCart = cart.filter(c => c.id === p.id);
+          if (inCart.length === 0) return p;
+          const deduct = inCart.reduce((sum, item) => sum + (item.qty * item.multiplier), 0);
+          return { ...p, stock: Math.max(0, p.stock - deduct) };
         }));
 
-        if (paymentMethod === 'Tempo / Kasbon (Hutang)') {
-          setCustomers(prev => prev.map(cust => cust.name === selectedCustomer ? { ...cust, debt: cust.debt + grandTotal } : cust));
+        // Catat kasbon bila tempo
+        if (paymentMethod.includes('Tempo') || paymentMethod.includes('Kasbon')) {
+          setCustomers(prev => prev.map(c => c.name === selectedCustomer ? { ...c, debt: c.debt + cartGrandTotal } : c));
         }
 
         setTransactions(prev => [newTx, ...prev]);
@@ -788,34 +406,100 @@
         setDiscountPercent(0);
       };
 
-      const categoryList = useMemo(() => ['Semua', ...new Set(products.map(p => p.category))], [products]);
+      // BLUETOOTH PRINT FUNCTION
+      const printBluetoothESC = async (receipt, width = 58) => {
+        if (!navigator.bluetooth) {
+          alert('Web Bluetooth tidak didukung browser ini. Silakan gunakan Google Chrome atau Cetak Driver System.');
+          return;
+        }
+        try {
+          setIsBluetoothPrinting(true);
+          setBluetoothStatus('Memindai printer Bluetooth terdekat...');
+          const device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [
+              '000018f0-0000-1000-8000-00805f9b34fb',
+              'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+              '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+            ]
+          });
+          setBluetoothStatus(`Menghubungkan ke ${device.name || 'Printer'}...`);
+          const server = await device.gatt.connect();
+          const services = await server.getPrimaryServices();
+          let writeChar = null;
+          for (const s of services) {
+            try {
+              const chars = await s.getCharacteristics();
+              for (const c of chars) {
+                if (c.properties.write || c.properties.writeWithoutResponse) {
+                  writeChar = c;
+                  break;
+                }
+              }
+              if (writeChar) break;
+            } catch (e) {}
+          }
+          if (!writeChar) throw new Error('Karakteristik Write printer tidak ditemukan.');
 
-      const filteredProducts = useMemo(() => {
-        return products.filter(p => {
-          const matchCat = selectedCat === 'Semua' || p.category === selectedCat;
-          const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.code.toLowerCase().includes(searchQuery.toLowerCase());
-          return matchCat && matchSearch;
-        });
-      }, [products, selectedCat, searchQuery]);
+          setBluetoothStatus('Mengirim data struk ESC/POS...');
+          const escData = generateEscPosCommands(receipt, profile, width);
+          const CHUNK = 512;
+          for (let i = 0; i < escData.length; i += CHUNK) {
+            const slice = escData.slice(i, i + CHUNK);
+            if (writeChar.writeValueWithoutResponse) {
+              await writeChar.writeValueWithoutResponse(slice);
+            } else {
+              await writeChar.writeValue(slice);
+            }
+          }
+          setBluetoothStatus('Struk berhasil dicetak!');
+          setTimeout(() => {
+            setIsBluetoothPrinting(false);
+            setBluetoothStatus('');
+          }, 1500);
+        } catch (err) {
+          console.error(err);
+          alert('Gagal cetak Bluetooth: ' + err.message);
+          setIsBluetoothPrinting(false);
+          setBluetoothStatus('');
+        }
+      };
+
+      // SYSTEM PRINT DRIVER
+      const printSystemDriver = (fmt) => {
+        const style = document.getElementById('dynamic-print-style');
+        if (style) {
+          if (fmt === 'thermal58') {
+            style.innerHTML = `@page { size: 58mm auto; margin: 0; } @media print { html, body { width: 58mm !important; margin: 0 auto; } #printable-area { width: 54mm !important; } }`;
+          } else if (fmt === 'thermal80') {
+            style.innerHTML = `@page { size: 80mm auto; margin: 0; } @media print { html, body { width: 80mm !important; margin: 0 auto; } #printable-area { width: 76mm !important; } }`;
+          } else {
+            style.innerHTML = `@page { size: A4 portrait; margin: 10mm; } @media print { html, body { width: 100% !important; } #printable-area { width: 100% !important; } }`;
+          }
+        }
+        setTimeout(() => window.print(), 100);
+      };
 
       const MENU_ITEMS = [
-        { id: 'dashboard', label: 'Dashboard Keuangan', icon: 'fa-chart-pie', badge: null },
-        { id: 'pos', label: 'Kasir POS Penjualan (F2)', icon: 'fa-cash-register', badge: 'F2' },
-        { id: 'inventory', label: 'Inventaris & Multi-Satuan', icon: 'fa-boxes-stacked', badge: products.length },
-        { id: 'restock', label: 'Stok Masuk & PO Supplier', icon: 'fa-truck-ramp-box', badge: null },
-        { id: 'debts', label: 'Buku Piutang (Kasbon)', icon: 'fa-hand-holding-dollar', badge: customers.filter(c => c.debt > 0).length },
-        { id: 'payables', label: 'Buku Utang Supplier', icon: 'fa-file-invoice-dollar', badge: suppliers.filter(s => s.payable > 0).length },
-        { id: 'expenses', label: 'Beban Operasional', icon: 'fa-money-bill-trend-up', badge: null },
-        { id: 'finance', label: 'Laporan Laba Rugi & Keuangan', icon: 'fa-chart-line', badge: null },
-        { id: 'employees', label: 'Manajemen Karyawan', icon: 'fa-users', badge: employees.length },
-        { id: 'settings', label: 'Pengaturan Rekening & Backup', icon: 'fa-gear', badge: 'JSON' }
+        { id: 'dashboard', label: 'Dashboard Keuangan', icon: 'fa-chart-pie', badge: 'Utama', color: 'text-emerald-400' },
+        { id: 'pos', label: 'Kasir POS Penjualan (F2)', icon: 'fa-cash-register', badge: 'F2', color: 'text-teal-400' },
+        { id: 'inventory', label: 'Inventaris & Kartu Stok', icon: 'fa-boxes-stacked', badge: products.length, color: 'text-sky-400' },
+        { id: 'restock', label: 'Stok Masuk & PO Supplier', icon: 'fa-truck-ramp-box', badge: purchases.length, color: 'text-indigo-400' },
+        { id: 'debts', label: 'Buku Piutang (Kasbon)', icon: 'fa-hand-holding-dollar', badge: customers.filter(c => c.debt > 0).length, color: 'text-amber-400' },
+        { id: 'payables', label: 'Buku Utang Supplier', icon: 'fa-file-invoice-dollar', badge: payables.filter(p => p.remainingAmount > 0).length, color: 'text-rose-400' },
+        { id: 'expenses', label: 'Beban Operasional', icon: 'fa-money-bill-trend-up', badge: expenses.length, color: 'text-orange-400' },
+        { id: 'finance', label: 'Laporan Laba Rugi & Finansial', icon: 'fa-chart-line', badge: 'Keuangan', color: 'text-cyan-400' },
+        { id: 'employees', label: 'Manajemen Karyawan (RBAC)', icon: 'fa-users-gear', badge: users.length, color: 'text-fuchsia-400' },
+        { id: 'settings', label: 'Pengaturan Rekening & Toko', icon: 'fa-gear', badge: 'Bank/QRIS', color: 'text-slate-400' }
       ];
 
       return (
         <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-100 font-sans">
           
-          {/* SIDEBAR KIRI */}
-          <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 border-r border-emerald-500/20 flex flex-col justify-between transition-transform duration-200 lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:static lg:block shadow-2xl`}>
+          {/* ======================================================== */}
+          {/* 1. SIDEBAR & HEADER NAVIGASI LENGKAP                     */}
+          {/* ======================================================== */}
+          <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between transition-transform duration-200 lg:translate-x-0 ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:static lg:block shadow-2xl`}>
             <div>
               <div className="p-4 border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-3 overflow-hidden">
@@ -825,7 +509,7 @@
                   <div className="overflow-hidden">
                     <h1 className="text-sm font-black tracking-tight text-slate-100 truncate">{profile.name}</h1>
                     <span className="inline-block px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      BLUETOOTH POS AKTIF
+                      ENTERPRISE POS
                     </span>
                   </div>
                 </div>
@@ -846,7 +530,7 @@
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <i className={`fa-solid ${item.icon} w-4 text-center text-sm ${currentTab === item.id ? 'text-slate-950' : 'text-emerald-400'}`}></i>
+                      <i className={`fa-solid ${item.icon} w-4 text-center text-sm ${currentTab === item.id ? 'text-slate-950' : item.color}`}></i>
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge !== null && (
@@ -864,18 +548,27 @@
             </div>
 
             <div className="p-3 border-t border-slate-800 bg-slate-950/60 space-y-2">
+              <div className="px-2 py-1 flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold flex items-center justify-center text-xs">
+                  AJ
+                </div>
+                <div className="overflow-hidden">
+                  <div className="text-xs font-bold text-slate-200 truncate">{profile.owner}</div>
+                  <div className="text-[10px] text-emerald-400">Hak Akses: OWNER</div>
+                </div>
+              </div>
               <button
                 onClick={() => {
-                  const blob = new Blob([JSON.stringify({ profile, products, customers, suppliers, transactions, expenses }, null, 2)], { type: 'application/json' });
+                  const blob = new Blob([JSON.stringify({ profile, products, customers, suppliers, purchases, payables, expenses, transactions, users }, null, 2)], { type: 'application/json' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
                   a.download = `backup-tb-cincinputih-${new Date().toISOString().split('T')[0]}.json`;
                   a.click();
                 }}
-                className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
+                className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all"
               >
-                <i className="fa-solid fa-file-export"></i> Export Backup (JSON)
+                <i className="fa-solid fa-file-export"></i> Backup Database (JSON)
               </button>
             </div>
           </aside>
@@ -886,18 +579,19 @@
 
           {/* AREA KANAN */}
           <div className="flex-1 flex flex-col h-screen overflow-hidden">
-            <header className="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-2.5 flex items-center justify-between lg:justify-end shrink-0">
-              <button onClick={() => setIsMobileSidebarOpen(true)} className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-200 text-sm">
-                <i className="fa-solid fa-bars"></i>
-              </button>
+            <header className="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-4 py-2.5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="text-right hidden sm:block">
-                  <div className="text-xs font-bold text-slate-200">{profile.name}</div>
-                  <div className="text-[10px] text-emerald-400">Kasir Siap Melayani</div>
-                </div>
+                <button onClick={() => setIsMobileSidebarOpen(true)} className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-200 text-sm">
+                  <i className="fa-solid fa-bars"></i>
+                </button>
+                <span className="text-xs sm:text-sm font-black text-slate-200 hidden sm:inline">
+                  {profile.name} • {profile.slogan}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentTab('pos')}
-                  className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
                 >
                   <i className="fa-solid fa-cash-register"></i> Kasir POS (F2)
                 </button>
@@ -906,36 +600,108 @@
 
             <main className="flex-1 overflow-y-auto p-3 sm:p-5">
               
-              {/* DASHBOARD */}
+              {/* ======================================================== */}
+              {/* 2. DASHBOARD KEUANGAN REAL-TIME & SAMBUTAN SPESIFIK       */}
+              {/* ======================================================== */}
               {currentTab === 'dashboard' && (
-                <div className="space-y-4 max-w-6xl mx-auto">
-                  <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-chart-pie text-emerald-400"></i> Dashboard Toko & Keuangan
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="space-y-5 max-w-6xl mx-auto">
+                  <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-slate-900 border border-emerald-500/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xl">
+                    <div>
+                      <span className="text-xs text-emerald-400 font-bold uppercase tracking-wider">Ikhtisar Bisnis Material</span>
+                      <h2 className="text-xl sm:text-2xl font-black text-slate-100 mt-1">
+                        Selamat Malam, Pak Ahmad Junaidi!
+                      </h2>
+                      <p className="text-xs text-slate-400 mt-0.5">Sistem operasional dan status keuangan TB. Cincin Putih berjalan optimal.</p>
+                    </div>
+                    <button
+                      onClick={() => setCurrentTab('pos')}
+                      className="px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/30"
+                    >
+                      <i className="fa-solid fa-plus"></i> Buka Transaksi Baru
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                     <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md">
-                      <span className="text-xs text-slate-400">Omzet Penjualan:</span>
-                      <h3 className="text-xl font-black text-emerald-400 mt-1">{formatRupiah(transactions.reduce((acc, t) => acc + t.total, 0))}</h3>
+                      <span className="text-xs text-slate-400 font-semibold">Total Omzet Penjualan:</span>
+                      <h3 className="text-xl font-black text-emerald-400 mt-1">{formatRupiah(totalOmzet)}</h3>
+                      <span className="text-[10px] text-slate-500">{transactions.length} transaksi tercatat</span>
                     </div>
                     <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md">
-                      <span className="text-xs text-slate-400">Piutang Kasbon:</span>
-                      <h3 className="text-xl font-black text-amber-400 mt-1">{formatRupiah(customers.reduce((acc, c) => acc + c.debt, 0))}</h3>
+                      <span className="text-xs text-slate-400 font-semibold">Laba Bersih Riil:</span>
+                      <h3 className="text-xl font-black text-teal-400 mt-1">{formatRupiah(totalLabaBersih)}</h3>
+                      <span className="text-[10px] text-slate-500">Setelah dikurangi beban operasional</span>
                     </div>
                     <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md">
-                      <span className="text-xs text-slate-400">Hutang ke Pabrik:</span>
-                      <h3 className="text-xl font-black text-rose-400 mt-1">{formatRupiah(suppliers.reduce((acc, s) => acc + s.payable, 0))}</h3>
+                      <span className="text-xs text-slate-400 font-semibold">Piutang Mandor (Kasbon):</span>
+                      <h3 className="text-xl font-black text-amber-400 mt-1">{formatRupiah(totalPiutang)}</h3>
+                      <span className="text-[10px] text-slate-500">{customers.filter(c=>c.debt>0).length} pelanggan aktif kasbon</span>
                     </div>
                     <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md">
-                      <span className="text-xs text-slate-400">Estimasi Laba Bersih:</span>
-                      <h3 className="text-xl font-black text-teal-400 mt-1">
-                        {formatRupiah(transactions.reduce((acc, t) => acc + t.profit, 0) - expenses.reduce((acc, e) => acc + e.amount, 0))}
+                      <span className="text-xs text-slate-400 font-semibold">Utang Usaha ke Pabrik:</span>
+                      <h3 className="text-xl font-black text-rose-400 mt-1">{formatRupiah(totalUtangUsaha)}</h3>
+                      <span className="text-[10px] text-slate-500">{payables.filter(p=>p.remainingAmount>0).length} PO distributor tempo</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <div className="lg:col-span-8 p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                      <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i className="fa-solid fa-clock-rotate-left text-emerald-400"></i> Transaksi Penjualan Terakhir
                       </h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="text-[10px] uppercase text-slate-500 border-b border-slate-800">
+                            <tr>
+                              <th className="pb-2">No. Nota</th>
+                              <th className="pb-2">Pelanggan</th>
+                              <th className="pb-2">Metode</th>
+                              <th className="pb-2 text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/60">
+                            {transactions.slice(0, 5).map(tx => (
+                              <tr key={tx.id} className="hover:bg-slate-800/30">
+                                <td className="py-2.5 font-mono text-emerald-400 font-bold">{tx.id}</td>
+                                <td className="py-2.5 font-semibold text-slate-200">{tx.customer}</td>
+                                <td className="py-2.5 text-slate-400">{tx.paymentMethod}</td>
+                                <td className="py-2.5 text-right font-black text-slate-100">{formatRupiah(tx.total)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-4 p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                      <h3 className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-2">
+                        <i className="fa-solid fa-triangle-exclamation"></i> Peringatan Stok Menipis ({lowStockProducts.length})
+                      </h3>
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {lowStockProducts.length === 0 ? (
+                          <div className="text-xs text-slate-500 py-4 text-center">Seluruh stok material dalam batas aman.</div>
+                        ) : (
+                          lowStockProducts.map(p => (
+                            <div key={p.id} className="p-2.5 rounded-xl bg-slate-950 border border-rose-500/20 flex justify-between items-center">
+                              <div>
+                                <div className="text-xs font-bold text-slate-200">{p.name}</div>
+                                <span className="text-[10px] text-slate-500">{p.category}</span>
+                              </div>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                                Sisa: {p.stock} {p.unit}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* KASIR POS */}
+              {/* ======================================================== */}
+              {/* 3. KASIR POS PENJUALAN DENGAN MULTI-SATUAN & BLUETOOTH    */}
+              {/* ======================================================== */}
               {currentTab === 'pos' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                   <div className="lg:col-span-7 xl:col-span-8 space-y-3">
@@ -944,27 +710,16 @@
                         <i className="fa-solid fa-search absolute left-3.5 top-3 text-slate-500 text-xs"></i>
                         <input 
                           type="text" 
-                          placeholder="Cari material..."
+                          placeholder="Cari nama material, kode SKU..."
                           value={searchQuery}
                           onChange={e => setSearchQuery(e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
                         />
-                      </div>
-                      <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-                        {categoryList.map(cat => (
-                          <button
-                            key={cat}
-                            onClick={() => setSelectedCat(cat)}
-                            className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${selectedCat === cat ? 'bg-emerald-500 text-slate-950 font-bold shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200'}`}
-                          >
-                            {cat}
-                          </button>
-                        ))}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[calc(100vh-170px)] overflow-y-auto pr-1">
-                      {filteredProducts.map(prod => (
+                      {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.code.toLowerCase().includes(searchQuery.toLowerCase())).map(prod => (
                         <div key={prod.id} className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col justify-between shadow-sm space-y-2">
                           <div>
                             <div className="flex justify-between items-start">
@@ -980,10 +735,8 @@
                           </div>
 
                           <div className="space-y-1.5 pt-2 border-t border-slate-800">
-                            <div className="text-[10px] text-slate-400 font-semibold">Pilih Satuan Jual:</div>
-                            
                             <button
-                              onClick={() => addToCartWithUnit(prod, prod.unit, prod.price, 1)}
+                              onClick={() => addToCart(prod, prod.unit, prod.price, 1)}
                               className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 border border-emerald-500/30 flex items-center justify-between text-xs font-bold transition-all"
                             >
                               <span>1 {prod.unit} (Utama)</span>
@@ -993,7 +746,7 @@
                             {prod.derivedUnits && prod.derivedUnits.map(du => (
                               <button
                                 key={du.id}
-                                onClick={() => addToCartWithUnit(prod, du.name, du.price, 1 / du.conversionRatio)}
+                                onClick={() => addToCart(prod, du.name, du.price, 1 / du.conversionRatio)}
                                 className="w-full py-1.5 px-2.5 rounded-lg bg-slate-950 hover:bg-teal-500 hover:text-slate-950 text-teal-400 border border-slate-800 flex items-center justify-between text-xs font-bold transition-all"
                               >
                                 <span>1 {du.name} (Eceran)</span>
@@ -1009,41 +762,26 @@
                   <div className="lg:col-span-5 xl:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between h-[calc(100vh-120px)] sticky top-4 shadow-xl">
                     <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm sm:text-base font-bold text-slate-100">Keranjang Kasir</span>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                            {cart.reduce((a, b) => a + b.qty, 0)} item
-                          </span>
-                        </div>
+                        <span className="text-sm font-bold text-slate-100">Keranjang Kasir ({cart.reduce((a, b) => a + b.qty, 0)})</span>
                         {cart.length > 0 && (
-                          <button onClick={() => setCart([])} className="text-xs text-rose-400 hover:underline">
-                            Kosongkan
-                          </button>
+                          <button onClick={() => setCart([])} className="text-xs text-rose-400 hover:underline">Kosongkan</button>
                         )}
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 my-2">
                         <div>
                           <label className="text-[10px] text-slate-400 block mb-1">Pelanggan</label>
-                          <select 
-                            value={selectedCustomer} 
-                            onChange={e => setSelectedCustomer(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
-                          >
+                          <select value={selectedCustomer} onChange={e => setSelectedCustomer(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-xs">
                             {customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                           </select>
                         </div>
                         <div>
                           <label className="text-[10px] text-slate-400 block mb-1">Metode Bayar</label>
-                          <select 
-                            value={paymentMethod} 
-                            onChange={e => setPaymentMethod(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
-                          >
+                          <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-xs">
                             <option value="Tunai">💵 Tunai / Cash</option>
                             <option value="Transfer BCA">💳 Transfer BCA</option>
-                            <option value="Transfer Mandiri">💳 Transfer Mandiri</option>
-                            <option value="QRIS">📱 QRIS</option>
+                            <option value="Transfer MANDIRI">💳 Transfer MANDIRI</option>
+                            <option value="QRIS">📱 QRIS Merchant</option>
                             <option value="Tempo / Kasbon (Hutang)">⏳ Tempo / Kasbon</option>
                           </select>
                         </div>
@@ -1053,29 +791,24 @@
                         {cart.length === 0 ? (
                           <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-4">
                             <i className="fa-solid fa-cart-shopping text-3xl mb-2 text-slate-600"></i>
-                            Keranjang kosong.
+                            Keranjang belanja kosong.
                           </div>
                         ) : (
                           cart.map(item => (
-                            <div key={item.cartItemId} className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                            <div key={item.cartKey} className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
                               <div className="flex justify-between items-start">
                                 <div>
                                   <div className="text-xs font-bold text-slate-200">{item.name}</div>
-                                  <div className="text-[10px] text-emerald-400 font-semibold">
-                                    {formatRupiah(item.activePrice)} / <span className="underline">{item.sellingUnit}</span>
-                                  </div>
+                                  <div className="text-[10px] text-emerald-400 font-semibold">{formatRupiah(item.activePrice)} / {item.sellingUnit}</div>
                                 </div>
-                                <div className="text-xs font-extrabold text-slate-100">
-                                  {formatRupiah(item.activePrice * item.qty)}
-                                </div>
+                                <div className="text-xs font-black text-slate-100">{formatRupiah(item.activePrice * item.qty)}</div>
                               </div>
-
                               <div className="flex items-center justify-between pt-1 border-t border-slate-900">
                                 <span className="text-[10px] text-slate-400">Satuan: <strong>{item.sellingUnit}</strong></span>
                                 <div className="flex items-center gap-1.5">
-                                  <button onClick={() => updateQty(item.cartItemId, item.qty - 1)} className="w-6 h-6 rounded bg-slate-800 text-slate-200 font-bold text-xs flex items-center justify-center hover:bg-slate-700">-</button>
+                                  <button onClick={() => item.qty > 1 ? setCart(cart.map(c => c.cartKey === item.cartKey ? { ...c, qty: c.qty - 1 } : c)) : setCart(cart.filter(c => c.cartKey !== item.cartKey))} className="w-6 h-6 rounded bg-slate-800 text-xs font-bold">-</button>
                                   <span className="w-8 text-center text-xs font-bold">{item.qty}</span>
-                                  <button onClick={() => updateQty(item.cartItemId, item.qty + 1)} className="w-6 h-6 rounded bg-slate-800 text-slate-200 font-bold text-xs flex items-center justify-center hover:bg-slate-700">+</button>
+                                  <button onClick={() => setCart(cart.map(c => c.cartKey === item.cartKey ? { ...c, qty: c.qty + 1 } : c))} className="w-6 h-6 rounded bg-slate-800 text-xs font-bold">+</button>
                                 </div>
                               </div>
                             </div>
@@ -1085,21 +818,21 @@
                     </div>
 
                     <div className="pt-2 border-t border-slate-800 space-y-2">
-                      <div className="flex justify-between items-center pt-1 border-t border-slate-800/80">
-                        <span className="text-xs text-slate-300 font-bold">TOTAL:</span>
-                        <span className="text-lg font-black text-emerald-400">{formatRupiah(grandTotal)}</span>
+                      <div className="flex justify-between items-center pt-1">
+                        <span className="text-xs text-slate-300 font-bold">TOTAL TAGIHAN:</span>
+                        <span className="text-lg font-black text-emerald-400">{formatRupiah(cartGrandTotal)}</span>
                       </div>
 
                       {paymentMethod === 'Tunai' && (
                         <div className="flex items-center gap-2">
                           <input 
-                            type="number"
-                            placeholder="Nominal Tunai (Rp)"
-                            value={cashInput}
-                            onChange={e => setCashInput(e.target.value)}
-                            className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500"
+                            type="number" 
+                            placeholder="Nominal Tunai (Rp)" 
+                            value={cashInput} 
+                            onChange={e => setCashInput(e.target.value)} 
+                            className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none"
                           />
-                          {Number(cashInput) >= grandTotal && grandTotal > 0 && (
+                          {Number(cashInput) >= cartGrandTotal && (
                             <div className="text-right text-xs">
                               <span className="text-[10px] text-slate-400 block">Kembalian:</span>
                               <span className="font-bold text-emerald-400">{formatRupiah(changeAmount)}</span>
@@ -1109,9 +842,9 @@
                       )}
 
                       <button 
-                        onClick={handleCheckout}
-                        disabled={cart.length === 0}
-                        className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-black text-xs sm:text-sm tracking-wide transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
+                        onClick={handleCheckout} 
+                        disabled={cart.length === 0} 
+                        className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg shadow-emerald-500/20"
                       >
                         BAYAR & CETAK STRUK RESMI
                       </button>
@@ -1120,20 +853,25 @@
                 </div>
               )}
 
-              {/* INVENTARIS & MULTI-SATUAN */}
+              {/* ======================================================== */}
+              {/* 4. INVENTARIS & KARTU STOK MATERIAL                      */}
+              {/* ======================================================== */}
               {currentTab === 'inventory' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div>
                       <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                        <i className="fa-solid fa-boxes-stacked text-emerald-400"></i>
-                        Inventaris & Konfigurasi Multi-Satuan ({products.length} Item)
+                        <i className="fa-solid fa-boxes-stacked text-emerald-400"></i> Inventaris & Multi-Satuan ({products.length} Material)
                       </h2>
-                      <p className="text-xs text-slate-400">Atur SKU, HPP modal, harga retail/grosir, serta satuan turunan eceran (Kg, Ons, Meter, dll).</p>
+                      <p className="text-xs text-slate-400">Atur SKU, HPP modal, harga grosir/eceran, serta satuan turunan.</p>
                     </div>
                     <button 
-                      onClick={handleOpenAddProductModal}
-                      className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                      onClick={() => {
+                        setEditingProduct(null);
+                        setProductFormData({ code: 'MAT-' + Math.floor(1000 + Math.random() * 9000), name: '', category: 'Semen & Pasir', unit: 'Sak', costPrice: '', price: '', wholesalePrice: '', stock: '', minStock: 10, location: 'Gudang Utama', derivedUnits: [] });
+                        setIsProductModalOpen(true);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg"
                     >
                       <i className="fa-solid fa-plus"></i> Tambah Material Baru
                     </button>
@@ -1141,14 +879,14 @@
 
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl overflow-x-auto">
                     <table className="w-full text-left text-xs text-slate-200">
-                      <thead className="bg-slate-950 text-slate-400 text-[11px] uppercase border-b border-slate-800">
+                      <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
                         <tr>
-                          <th className="p-3">Kode SKU</th>
-                          <th className="p-3">Nama Produk Material</th>
-                          <th className="p-3">Kategori & Lokasi</th>
-                          <th className="p-3 text-right">Harga Satuan Utama</th>
-                          <th className="p-3">Satuan Turunan (Eceran)</th>
-                          <th className="p-3 text-center">Sisa Stok</th>
+                          <th className="p-3">SKU</th>
+                          <th className="p-3">Nama Material</th>
+                          <th className="p-3">Kategori</th>
+                          <th className="p-3 text-right">Harga Jual Utama</th>
+                          <th className="p-3">Satuan Turunan</th>
+                          <th className="p-3 text-center">Stok</th>
                           <th className="p-3 text-center">Aksi</th>
                         </tr>
                       </thead>
@@ -1156,57 +894,32 @@
                         {products.map(item => (
                           <tr key={item.id} className="hover:bg-slate-800/40">
                             <td className="p-3 font-mono text-emerald-400 font-bold">{item.code}</td>
-                            <td className="p-3">
-                              <div className="font-bold text-slate-100">{item.name}</div>
-                              <div className="text-[10px] text-slate-400">HPP: {formatRupiah(item.costPrice)} • Grosir: {formatRupiah(item.wholesalePrice)}</div>
-                            </td>
-                            <td className="p-3">
-                              <div className="text-slate-300">{item.category}</div>
-                              <div className="text-[10px] text-slate-500 font-mono">{item.location || '-'}</div>
-                            </td>
-                            <td className="p-3 text-right">
-                              <div className="font-bold text-emerald-400">{formatRupiah(item.price)}</div>
-                              <div className="text-[10px] text-slate-400">per {item.unit}</div>
-                            </td>
+                            <td className="p-3 font-bold text-slate-100">{item.name}</td>
+                            <td className="p-3 text-slate-300">{item.category}</td>
+                            <td className="p-3 text-right font-bold text-emerald-400">{formatRupiah(item.price)} / {item.unit}</td>
                             <td className="p-3">
                               {item.derivedUnits && item.derivedUnits.length > 0 ? (
-                                <div className="space-y-1">
-                                  {item.derivedUnits.map(du => (
-                                    <div key={du.id} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-teal-300 mr-1.5">
-                                      <i className="fa-solid fa-link text-[9px] text-teal-500"></i>
-                                      <span>1 {item.unit} = {du.conversionRatio} {du.name}</span>
-                                      <strong className="text-slate-100">({formatRupiah(du.price)})</strong>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-slate-500 text-[11px]">- Belum ada konversi -</span>
-                              )}
+                                item.derivedUnits.map(du => (
+                                  <span key={du.id} className="inline-block px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-teal-300 mr-1">
+                                    1 {item.unit} = {du.conversionRatio} {du.name} ({formatRupiah(du.price)})
+                                  </span>
+                                ))
+                              ) : <span className="text-slate-500 text-[11px]">-</span>}
                             </td>
                             <td className="p-3 text-center">
-                              <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock > (item.minStock || 10) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
+                              <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock > (item.minStock || 10) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
                                 {item.stock} {item.unit}
                               </span>
                             </td>
                             <td className="p-3 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <button
-                                  onClick={() => handleOpenEditProductModal(item)}
-                                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-slate-200 text-xs font-bold transition-colors flex items-center gap-1"
-                                >
-                                  <i className="fa-solid fa-pen-to-square text-[11px]"></i> Edit
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (confirm(`Hapus ${item.name} dari daftar master?`)) {
-                                      setProducts(prev => prev.filter(p => p.id !== item.id));
-                                    }
-                                  }}
-                                  className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs transition-colors"
-                                >
-                                  <i className="fa-solid fa-trash"></i>
-                                </button>
-                              </div>
+                              <button 
+                                onClick={() => {
+                                  if (confirm(`Hapus material ${item.name}?`)) setProducts(products.filter(p => p.id !== item.id));
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -1216,77 +929,122 @@
                 </div>
               )}
 
-              {/* TAB LAINNYA */}
+              {/* ======================================================== */}
+              {/* 5. STOK MASUK & PO SUPPLIER (DENGAN TOMBOL HAPUS TRASH)  */}
+              {/* ======================================================== */}
               {currentTab === 'restock' && (
-                <div className="space-y-4 max-w-5xl mx-auto">
-                  <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-truck-ramp-box text-emerald-400"></i> Penerimaan Barang Masuk Pabrik
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {suppliers.map(sup => (
-                      <div key={sup.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-bold text-sm text-slate-100">{sup.name}</h3>
-                            <p className="text-xs text-slate-400">Material: {sup.material}</p>
-                          </div>
-                          <span className="text-xs text-emerald-400">{sup.phone}</span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const namaBrg = prompt(`Pilih barang masuk dari ${sup.name}:`);
-                            if (!namaBrg) return;
-                            const qty = Number(prompt(`Jumlah stok masuk:`, '50')) || 0;
-                            const target = products.find(p => p.name.toLowerCase().includes(namaBrg.toLowerCase()));
-                            if (target) {
-                              setProducts(prev => prev.map(p => p.id === target.id ? { ...p, stock: p.stock + qty } : p));
-                              alert(`Stok ${target.name} bertambah +${qty} ${target.unit}!`);
-                            }
-                          }}
-                          className="w-full py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs border border-emerald-500/30"
-                        >
-                          + Catat Surat Jalan Masuk
-                        </button>
-                      </div>
-                    ))}
+                <div className="space-y-4 max-w-6xl mx-auto">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        <i className="fa-solid fa-truck-ramp-box text-emerald-400"></i> Penerimaan Stok & PO Supplier
+                      </h2>
+                      <p className="text-xs text-slate-400">Riwayat surat pesanan pengadaan dari distributor dan pabrik semen/besi/seng.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const sup = prompt('Nama Supplier Distributor:', 'PT. Indocement Tunggal Prakarsa');
+                        if (!sup) return;
+                        const total = Number(prompt('Total Nominal PO (Rp):', '5000000')) || 0;
+                        const newPO = {
+                          id: 'po-' + Date.now(),
+                          poNumber: 'PO-' + Math.floor(1000 + Math.random() * 9000),
+                          date: new Date().toLocaleDateString('id-ID'),
+                          supplierName: sup,
+                          totalAmount: total,
+                          paymentStatus: 'Tempo (Utang)',
+                          paymentMethod: 'Tempo',
+                          receivedBy: 'Gudang'
+                        };
+                        setPurchases([newPO, ...purchases]);
+                        setPayables([{ id: 'py-' + Date.now(), poNumber: newPO.poNumber, supplierName: sup, totalAmount: total, paidAmount: 0, remainingAmount: total, dueDate: '30 Hari', status: 'Belum Lunas' }, ...payables]);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-plus"></i> Catat PO Masuk Baru
+                    </button>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <table className="w-full text-left text-xs text-slate-200">
+                      <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                        <tr>
+                          <th className="p-3">No. PO</th>
+                          <th className="p-3">Tanggal</th>
+                          <th className="p-3">Nama Supplier</th>
+                          <th className="p-3 text-right">Total Nilai</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Penerima</th>
+                          <th className="p-3 text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {purchases.map(po => (
+                          <tr key={po.id} className="hover:bg-slate-800/40">
+                            <td className="p-3 font-mono text-emerald-400 font-bold">{po.poNumber}</td>
+                            <td className="p-3 text-slate-400">{po.date}</td>
+                            <td className="p-3 font-bold text-slate-100">{po.supplierName}</td>
+                            <td className="p-3 text-right font-black text-slate-100">{formatRupiah(po.totalAmount)}</td>
+                            <td className="p-3"><span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">{po.paymentStatus}</span></td>
+                            <td className="p-3 text-slate-400">{po.receivedBy}</td>
+                            <td className="p-3 text-center">
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Hapus catatan PO #${po.poNumber}?`)) {
+                                    setPurchases(purchases.filter(p => p.id !== po.id));
+                                    setPayables(payables.filter(py => py.poNumber !== po.poNumber));
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
 
+              {/* ======================================================== */}
+              {/* 6. BUKU PIUTANG (KASBON MANDOR & PELANGGAN)               */}
+              {/* ======================================================== */}
               {currentTab === 'debts' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
                   <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-hand-holding-dollar text-emerald-400"></i> Buku Piutang Kasbon Mandor
+                    <i className="fa-solid fa-hand-holding-dollar text-emerald-400"></i> Buku Piutang Kasbon Mandor & Proyek
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {customers.map(cust => (
-                      <div key={cust.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 flex flex-col justify-between">
+                      <div key={cust.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 flex flex-col justify-between shadow-md">
                         <div>
-                          <div className="flex justify-between items-center">
+                          <div className="flex justify-between items-start">
                             <h3 className="font-bold text-sm text-slate-100">{cust.name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${cust.debt > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${cust.debt > 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400'}`}>
                               {cust.debt > 0 ? 'Ada Bon' : 'Lunas'}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-400 mt-1">{cust.phone}</p>
-                          <div className="mt-2 p-2 rounded-lg bg-slate-950">
-                            <span className="text-[10px] text-slate-400 block">Sisa Hutang:</span>
+                          <p className="text-[11px] text-slate-400 mt-1">{cust.phone}</p>
+                          <div className="mt-2 p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block">Sisa Bon Piutang:</span>
                             <span className="text-base font-black text-rose-400">{formatRupiah(cust.debt)}</span>
                           </div>
                         </div>
 
                         <button
+                          disabled={cust.debt <= 0}
                           onClick={() => {
-                            const bayar = Number(prompt(`Nominal cicilan bon ${cust.name}:`, '100000'));
+                            const bayar = Number(prompt(`Nominal pembayaran cicilan bon ${cust.name}:`, '500000'));
                             if (bayar > 0) {
-                              setCustomers(prev => prev.map(c => c.id === cust.id ? { ...c, debt: Math.max(0, c.debt - bayar) } : c));
-                              alert(`Pembayaran kasbon berhasil dicatat!`);
+                              setCustomers(customers.map(c => c.id === cust.id ? { ...c, debt: Math.max(0, c.debt - bayar) } : c));
+                              alert('Pembayaran cicilan berhasil dicatat!');
                             }
                           }}
-                          disabled={cust.debt <= 0}
-                          className="w-full py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-bold text-xs"
+                          className="w-full py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-30 text-slate-950 font-bold text-xs"
                         >
-                          Bayar Bon
+                          Catat Bayar Bon
                         </button>
                       </div>
                     ))}
@@ -1294,46 +1052,123 @@
                 </div>
               )}
 
+              {/* ======================================================== */}
+              {/* 7. BUKU UTANG SUPPLIER (DENGAN TOMBOL HAPUS TRASH)        */}
+              {/* ======================================================== */}
               {currentTab === 'payables' && (
-                <div className="space-y-4 max-w-5xl mx-auto">
+                <div className="space-y-4 max-w-6xl mx-auto">
                   <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-file-invoice-dollar text-emerald-400"></i> Buku Tagihan Pabrik
+                    <i className="fa-solid fa-file-invoice-dollar text-emerald-400"></i> Buku Utang Usaha Distributor
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {suppliers.map(s => (
-                      <div key={s.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
-                        <h3 className="font-bold text-sm text-slate-100">{s.name}</h3>
-                        <p className="text-xs text-slate-400">Pasokan: {s.material}</p>
-                        <div className="p-2 rounded-lg bg-slate-950">
-                          <span className="text-[10px] text-slate-400 block">Sisa Tagihan:</span>
-                          <span className="text-base font-black text-rose-400">{formatRupiah(s.payable)}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <table className="w-full text-left text-xs text-slate-200">
+                      <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                        <tr>
+                          <th className="p-3">Ref PO</th>
+                          <th className="p-3">Distributor</th>
+                          <th className="p-3 text-right">Total Tagihan</th>
+                          <th className="p-3 text-right">Sisa Utang</th>
+                          <th className="p-3">Jatuh Tempo</th>
+                          <th className="p-3 text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {payables.map(py => (
+                          <tr key={py.id} className="hover:bg-slate-800/40">
+                            <td className="p-3 font-mono text-emerald-400 font-bold">{py.poNumber}</td>
+                            <td className="p-3 font-bold text-slate-100">{py.supplierName}</td>
+                            <td className="p-3 text-right text-slate-300">{formatRupiah(py.totalAmount)}</td>
+                            <td className="p-3 text-right font-black text-rose-400">{formatRupiah(py.remainingAmount)}</td>
+                            <td className="p-3 text-amber-400 font-semibold">{py.dueDate}</td>
+                            <td className="p-3 text-center flex items-center justify-center gap-2">
+                              {py.remainingAmount > 0 && (
+                                <button
+                                  onClick={() => {
+                                    const bayar = Number(prompt(`Nominal bayar utang ke ${py.supplierName}:`, String(py.remainingAmount)));
+                                    if (bayar > 0) {
+                                      setPayables(payables.map(p => p.id === py.id ? { ...p, remainingAmount: Math.max(0, p.remainingAmount - bayar) } : p));
+                                    }
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs"
+                                >
+                                  Bayar
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Hapus data utang PO #${py.poNumber}?`)) {
+                                    setPayables(payables.filter(p => p.id !== py.id));
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
 
+              {/* ======================================================== */}
+              {/* 8. BEBAN OPERASIONAL TOKO (DENGAN TOMBOL HAPUS TRASH)    */}
+              {/* ======================================================== */}
               {currentTab === 'expenses' && (
-                <div className="space-y-4 max-w-5xl mx-auto">
-                  <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-money-bill-trend-up text-emerald-400"></i> Beban Operasional Toko
-                  </h2>
-                  <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="space-y-4 max-w-6xl mx-auto">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        <i className="fa-solid fa-money-bill-trend-up text-emerald-400"></i> Beban Operasional Toko
+                      </h2>
+                      <p className="text-xs text-slate-400">Pengeluaran rutin: bahan bakar armada, gaji staf, kuli muat, dan utilitas.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const desc = prompt('Keterangan Pengeluaran:');
+                        if (!desc) return;
+                        const amt = Number(prompt('Nominal Pengeluaran (Rp):', '100000')) || 0;
+                        const cat = prompt('Kategori (BBM & Transport / Upah Kuli / Listrik):', 'Operasional');
+                        setExpenses([{ id: 'e-' + Date.now(), date: new Date().toISOString().split('T')[0], desc, amount: amt, category: cat || 'Operasional' }, ...expenses]);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-plus"></i> Catat Beban Baru
+                    </button>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                     <table className="w-full text-left text-xs text-slate-200">
                       <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
                         <tr>
                           <th className="p-3">Tanggal</th>
-                          <th className="p-3">Keterangan</th>
+                          <th className="p-3">Kategori</th>
+                          <th className="p-3">Keterangan Biaya</th>
                           <th className="p-3 text-right">Nominal</th>
+                          <th className="p-3 text-center">Aksi</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/60">
                         {expenses.map(e => (
                           <tr key={e.id} className="hover:bg-slate-800/40">
                             <td className="p-3 font-mono text-slate-400">{e.date}</td>
-                            <td className="p-3 font-bold text-slate-200">{e.desc}</td>
-                            <td className="p-3 text-right font-bold text-rose-400">{formatRupiah(e.amount)}</td>
+                            <td className="p-3 font-semibold text-emerald-400">{e.category}</td>
+                            <td className="p-3 text-slate-200">{e.desc}</td>
+                            <td className="p-3 text-right font-black text-rose-400">{formatRupiah(e.amount)}</td>
+                            <td className="p-3 text-center">
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Hapus catatan beban ${e.desc}?`)) {
+                                    setExpenses(expenses.filter(item => item.id !== e.id));
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1342,399 +1177,185 @@
                 </div>
               )}
 
+              {/* ======================================================== */}
+              {/* 9. LAPORAN LABA RUGI & FINANSIAL AKUNTANSI               */}
+              {/* ======================================================== */}
               {currentTab === 'finance' && (
-                <div className="space-y-4 max-w-5xl mx-auto">
+                <div className="space-y-4 max-w-4xl mx-auto">
                   <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-chart-line text-emerald-400"></i> Laporan Laba Rugi Bersih
+                    <i className="fa-solid fa-chart-line text-emerald-400"></i> Laporan Laba Rugi Komprehensif
                   </h2>
-                  <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                    <div className="flex justify-between text-sm py-2 border-b border-slate-800">
-                      <span className="text-slate-400">Total Omzet:</span>
-                      <span className="font-bold text-slate-100">{formatRupiah(transactions.reduce((acc, t) => acc + t.total, 0))}</span>
+                  <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl">
+                    <div className="flex justify-between py-2 border-b border-slate-800 text-sm">
+                      <span className="text-slate-400">Total Pendapatan Omzet Penjualan</span>
+                      <span className="font-bold text-slate-100">{formatRupiah(totalOmzet)}</span>
                     </div>
-                    <div className="flex justify-between text-base py-3 border-t-2 border-emerald-500/40">
-                      <span className="font-black text-slate-100">LABA BERSIH RIIL:</span>
-                      <span className="font-black text-xl text-emerald-400">
-                        {formatRupiah(transactions.reduce((acc, t) => acc + t.profit, 0) - expenses.reduce((acc, e) => acc + e.amount, 0))}
-                      </span>
+                    <div className="flex justify-between py-2 border-b border-slate-800 text-sm">
+                      <span className="text-slate-400">Laba Kotor Material</span>
+                      <span className="font-bold text-teal-400">{formatRupiah(totalLabaKotor)}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-800 text-sm">
+                      <span className="text-slate-400">Total Beban Operasional Usaha</span>
+                      <span className="font-bold text-rose-400">-{formatRupiah(totalBeban)}</span>
+                    </div>
+                    <div className="flex justify-between pt-3 border-t-2 border-emerald-500/50 text-base">
+                      <span className="font-black text-slate-100">LABA BERSIH OPERASIONAL:</span>
+                      <span className="font-black text-xl text-emerald-400">{formatRupiah(totalLabaBersih)}</span>
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* ======================================================== */}
+              {/* 10. MANAJEMEN KARYAWAN (RBAC OWNER & KASIR)              */}
+              {/* ======================================================== */}
               {currentTab === 'employees' && (
                 <div className="space-y-4 max-w-5xl mx-auto">
-                  <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-users text-emerald-400"></i> Manajemen Karyawan
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {employees.map(emp => (
-                      <div key={emp.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-                        <h3 className="font-bold text-sm text-slate-100">{emp.name}</h3>
-                        <p className="text-xs text-slate-400">Posisi: {emp.role}</p>
-                      </div>
-                    ))}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                        <i className="fa-solid fa-users-gear text-emerald-400"></i> Manajemen Hak Akses Staf & Karyawan
+                      </h2>
+                      <p className="text-xs text-slate-400">Role-Based Access Control (RBAC): Owner vs Kasir Toko.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const name = prompt('Nama Karyawan:');
+                        if (!name) return;
+                        const role = prompt('Hak Akses (OWNER / KASIR):', 'KASIR');
+                        const phone = prompt('Nomor WhatsApp:');
+                        setUsers([...users, { id: 'u-' + Date.now(), username: name.toLowerCase().replace(/\s/g, ''), name, role: (role || 'KASIR').toUpperCase(), phone: phone || '-', active: true }]);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-user-plus"></i> Tambah Akun Karyawan
+                    </button>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <table className="w-full text-left text-xs text-slate-200">
+                      <thead className="bg-slate-950 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                        <tr>
+                          <th className="p-3">Nama Karyawan</th>
+                          <th className="p-3">Hak Akses Role</th>
+                          <th className="p-3">WhatsApp</th>
+                          <th className="p-3 text-center">Status</th>
+                          <th className="p-3 text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60">
+                        {users.map(u => (
+                          <tr key={u.id} className="hover:bg-slate-800/40">
+                            <td className="p-3 font-bold text-slate-100">{u.name}</td>
+                            <td className="p-3"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'OWNER' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-sky-500/20 text-sky-400 border border-sky-500/30'}`}>{u.role}</span></td>
+                            <td className="p-3 text-slate-400">{u.phone}</td>
+                            <td className="p-3 text-center"><span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">Aktif</span></td>
+                            <td className="p-3 text-center">
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Hapus akun ${u.name}?`)) setUsers(users.filter(item => item.id !== u.id));
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
 
+              {/* ======================================================== */}
+              {/* 11. PENGATURAN TOKO, REKENING BANK & QRIS (4 TAB AKTIF)  */}
+              {/* ======================================================== */}
               {currentTab === 'settings' && (
                 <div className="space-y-4 max-w-4xl mx-auto">
-                  <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                    <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                      <i className="fa-solid fa-store text-emerald-400"></i> Profil Toko & Footer
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-slate-400 block mb-1">Nama Toko</label>
-                        <input type="text" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs" />
-                      </div>
-                      <div>
-                        <label className="text-xs text-slate-400 block mb-1">Telepon</label>
-                        <input type="text" value={profile.phone} onChange={e => setProfile({ ...profile, phone: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs" />
+                  <div className="flex gap-2 border-b border-slate-800 pb-2">
+                    <button onClick={() => setSettingsSubTab('bank')} className={`px-3 py-1.5 rounded-xl text-xs font-bold ${settingsSubTab === 'bank' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Rekening Bank & QRIS</button>
+                    <button onClick={() => setSettingsSubTab('profile')} className={`px-3 py-1.5 rounded-xl text-xs font-bold ${settingsSubTab === 'profile' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Profil & Kontak Toko</button>
+                    <button onClick={() => setSettingsSubTab('receipt')} className={`px-3 py-1.5 rounded-xl text-xs font-bold ${settingsSubTab === 'receipt' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>Format Struk & Footer</button>
+                  </div>
+
+                  {settingsSubTab === 'bank' && (
+                    <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                      <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                        <i className="fa-solid fa-building-columns text-emerald-400"></i> Rekening Bank Utama Toko
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Nama Bank</label>
+                          <input type="text" value={profile.bankName} onChange={e => setProfile({ ...profile, bankName: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Nomor Rekening</label>
+                          <input type="text" value={profile.bankAcc} onChange={e => setProfile({ ...profile, bankAcc: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Atas Nama Pemilik</label>
+                          <input type="text" value={profile.bankHolder} onChange={e => setProfile({ ...profile, bankHolder: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs" />
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {settingsSubTab === 'profile' && (
+                    <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                      <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                        <i className="fa-solid fa-id-card text-emerald-400"></i> Identitas Toko Bangunan
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Nama Toko</label>
+                          <input type="text" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Owner / Pemilik</label>
+                          <input type="text" value={profile.owner} onChange={e => setProfile({ ...profile, owner: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs" />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="text-xs text-slate-400 block mb-1">Alamat Gudang & Toko</label>
+                          <input type="text" value={profile.address} onChange={e => setProfile({ ...profile, address: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {settingsSubTab === 'receipt' && (
+                    <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                      <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                        <i className="fa-solid fa-receipt text-emerald-400"></i> Footer Struk & Syarat Retur
+                      </h3>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Pesan Penutup Kaki Nota</label>
+                        <textarea rows="3" value={profile.footer} onChange={e => setProfile({ ...profile, footer: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs"></textarea>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
+
             </main>
           </div>
 
           {/* ======================================================== */}
-          {/* 🌟 1. MODAL TAMBAH / EDIT DENGAN MULTI-SATUAN LENGKAP     */}
-          {/* ======================================================== */}
-          {isProductModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto no-print">
-              <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 max-w-3xl w-full shadow-2xl space-y-5 my-auto max-h-[95vh] overflow-y-auto">
-                
-                {/* Header Modal */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-lg font-black">
-                      <i className={editingProduct ? "fa-solid fa-pen-to-square" : "fa-solid fa-boxes-packing"}></i>
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-slate-100">
-                        {editingProduct ? 'Edit Spesifikasi & Multi-Satuan Barang' : 'Tambah Material Baru & Konfigurasi Multi-Satuan'}
-                      </h3>
-                      <p className="text-xs text-slate-400">Lengkapi SKU, HPP modal, harga eceran, serta satuan turunan (Kg, Ons, Meter, Dus).</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsProductModalOpen(false)}
-                    className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"
-                  >
-                    <i className="fa-solid fa-xmark"></i>
-                  </button>
-                </div>
-
-                {/* Form Input */}
-                <form onSubmit={handleSaveProductModal} className="space-y-4">
-                  
-                  {/* Baris 1: Kode SKU & Kategori */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                    <div className="sm:col-span-4">
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Kode SKU / Barcode <span className="text-emerald-400">*</span>
-                      </label>
-                      <input 
-                        type="text"
-                        required
-                        placeholder="Contoh: SMN-01"
-                        value={productFormData.code}
-                        onChange={e => setProductFormData({ ...productFormData, code: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-emerald-400 font-bold uppercase focus:outline-none"
-                      />
-                    </div>
-                    <div className="sm:col-span-8">
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Kategori Material <span className="text-emerald-400">*</span>
-                      </label>
-                      <select 
-                        value={productFormData.category}
-                        onChange={e => setProductFormData({ ...productFormData, category: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none"
-                      >
-                        {CATEGORY_OPTIONS.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Baris 2: Nama Lengkap Material & Satuan Utama */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                    <div className="sm:col-span-8">
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Nama Lengkap Material <span className="text-emerald-400">*</span>
-                      </label>
-                      <input 
-                        type="text"
-                        required
-                        placeholder="Contoh: Semen Tiga Roda 50kg"
-                        value={productFormData.name}
-                        onChange={e => setProductFormData({ ...productFormData, name: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 font-bold focus:outline-none"
-                      />
-                    </div>
-                    <div className="sm:col-span-4">
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Satuan Utama (Base Unit) <span className="text-emerald-400">*</span>
-                      </label>
-                      <select 
-                        value={productFormData.unit}
-                        onChange={e => setProductFormData({ ...productFormData, unit: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 font-bold focus:outline-none"
-                      >
-                        {BASE_UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Baris 3: Harga Jual Satuan Utama */}
-                  <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-2.5">
-                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <i className="fa-solid fa-coins text-amber-400"></i> Harga Jual Satuan Utama ({productFormData.unit})
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <div>
-                        <label className="text-[11px] text-slate-400 block mb-1">Harga Beli Modal (HPP)</label>
-                        <input 
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={productFormData.costPrice}
-                          onChange={e => setProductFormData({ ...productFormData, costPrice: e.target.value })}
-                          className="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 font-semibold focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-emerald-400 font-semibold block mb-1">Harga Jual Retail ({productFormData.unit})</label>
-                        <input 
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={productFormData.price}
-                          onChange={e => setProductFormData({ ...productFormData, price: e.target.value })}
-                          className="w-full bg-slate-900 border border-emerald-500/50 focus:border-emerald-400 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] text-teal-400 font-semibold block mb-1">Harga Grosir ({productFormData.unit})</label>
-                        <input 
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={productFormData.wholesalePrice}
-                          onChange={e => setProductFormData({ ...productFormData, wholesalePrice: e.target.value })}
-                          className="w-full bg-slate-900 border border-slate-800 focus:border-teal-400 rounded-xl px-3 py-2 text-xs text-teal-400 font-bold focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ==================================================== */}
-                  {/* 🔗 BAGIAN DINAMIS: KONFIGURASI SATUAN TURUNAN       */}
-                  {/* ==================================================== */}
-                  <div className="p-4 rounded-2xl bg-slate-950 border border-teal-500/30 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <i className="fa-solid fa-layer-group text-teal-400"></i>
-                        <span className="text-xs font-bold text-slate-100">Konfigurasi Multi-Satuan / Satuan Turunan</span>
-                      </div>
-                      <span className="text-[10px] text-slate-400">
-                        Base: <strong>1 {productFormData.unit}</strong>
-                      </span>
-                    </div>
-
-                    {/* Input Dinamis Satuan Turunan */}
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-900/90 p-3 rounded-xl border border-slate-800 items-end">
-                      <div className="sm:col-span-4">
-                        <label className="text-[10px] font-semibold text-slate-300 block mb-1">Nama Satuan Turunan</label>
-                        <input 
-                          type="text"
-                          placeholder="Contoh: Kg, Ons, Meter"
-                          value={newDerivedName}
-                          onChange={e => setNewDerivedName(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 focus:border-teal-400 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none"
-                        />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <label className="text-[10px] font-semibold text-slate-300 block mb-1">Konversi per 1 {productFormData.unit}</label>
-                        <input 
-                          type="number"
-                          step="any"
-                          min="0.001"
-                          placeholder="Contoh: 50"
-                          value={newDerivedRatio}
-                          onChange={e => setNewDerivedRatio(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 focus:border-teal-400 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 font-mono text-center focus:outline-none"
-                        />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <label className="text-[10px] font-semibold text-teal-400 block mb-1">Harga Jual Turunan (Rp)</label>
-                        <input 
-                          type="number"
-                          min="0"
-                          placeholder="Contoh: 2500"
-                          value={newDerivedPrice}
-                          onChange={e => setNewDerivedPrice(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 focus:border-teal-400 rounded-lg px-2.5 py-1.5 text-xs text-teal-300 font-bold focus:outline-none"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <button
-                          type="button"
-                          onClick={handleAddDerivedUnit}
-                          className="w-full py-1.5 px-3 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1 transition-colors shadow-sm"
-                        >
-                          <i className="fa-solid fa-plus text-[10px]"></i> Tambah
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Tabel Daftar Satuan Turunan Tersimpan */}
-                    {productFormData.derivedUnits.length > 0 ? (
-                      <div className="overflow-x-auto rounded-xl border border-slate-800">
-                        <table className="w-full text-left text-xs text-slate-200">
-                          <thead className="bg-slate-900 text-slate-400 text-[10px] uppercase border-b border-slate-800">
-                            <tr>
-                              <th className="p-2.5">Satuan Turunan</th>
-                              <th className="p-2.5 text-center">Rasio Konversi</th>
-                              <th className="p-2.5 text-right">Harga Jual Eceran</th>
-                              <th className="p-2.5 text-center">Aksi</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800/60 bg-slate-950">
-                            {productFormData.derivedUnits.map(unitItem => (
-                              <tr key={unitItem.id} className="hover:bg-slate-900/50">
-                                <td className="p-2.5 font-bold text-teal-300 flex items-center gap-1.5">
-                                  <i className="fa-solid fa-arrow-right text-[10px] text-teal-500"></i>
-                                  {unitItem.name}
-                                </td>
-                                <td className="p-2.5 text-center font-mono text-slate-300">
-                                  1 {productFormData.unit} = <strong>{unitItem.conversionRatio}</strong> {unitItem.name}
-                                </td>
-                                <td className="p-2.5 text-right font-extrabold text-emerald-400">
-                                  {formatRupiah(unitItem.price)} / {unitItem.name}
-                                </td>
-                                <td className="p-2.5 text-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveDerivedUnit(unitItem.id)}
-                                    className="px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-bold"
-                                  >
-                                    <i className="fa-solid fa-trash mr-1"></i> Hapus
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="text-center py-2.5 text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                        Belum ada satuan turunan yang ditambahkan.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Baris 4: Stok Fisik & Lokasi Rak */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Stok Fisik ({productFormData.unit}) <span className="text-emerald-400">*</span>
-                      </label>
-                      <input 
-                        type="number"
-                        min="0"
-                        required
-                        placeholder="0"
-                        value={productFormData.stock}
-                        onChange={e => setProductFormData({ ...productFormData, stock: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 font-bold focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">Peringatan Min. Stok</label>
-                      <input 
-                        type="number"
-                        min="0"
-                        placeholder="10"
-                        value={productFormData.minStock}
-                        onChange={e => setProductFormData({ ...productFormData, minStock: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-rose-400 font-semibold focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">Lokasi Rak / Gudang</label>
-                      <input 
-                        type="text"
-                        placeholder="Contoh: Rak Besi B-02"
-                        value={productFormData.location}
-                        onChange={e => setProductFormData({ ...productFormData, location: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tombol Aksi Simpan */}
-                  <div className="flex gap-2.5 pt-3 border-t border-slate-800">
-                    <button
-                      type="submit"
-                      className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
-                    >
-                      <i className="fa-solid fa-floppy-disk"></i>
-                      {editingProduct ? 'Simpan Perubahan Material' : 'Simpan Material Baru ke Database'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsProductModalOpen(false)}
-                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
-                    >
-                      Batal
-                    </button>
-                  </div>
-                </form>
-
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* 🖨️ 2. MODAL CETAK STRUK BLUETOOTH & SYSTEM PRINT         */}
+          {/* 🖨️ MODAL CETAK STRUK BLUETOOTH & SYSTEM PRINT            */}
           {/* ======================================================== */}
           {printReceipt && (
             <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4 no-print overflow-y-auto">
               <div className="bg-white text-slate-900 rounded-2xl p-5 sm:p-6 max-w-lg w-full font-mono text-xs shadow-2xl space-y-4 max-h-[95vh] overflow-y-auto">
                 
-                {/* Pilihan Toggle Format Ukuran Kertas */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b border-slate-200 gap-2">
+                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
                   <span className="font-bold text-slate-800 text-xs">Pilih Ukuran Kertas:</span>
                   <div className="flex gap-1">
-                    <button 
-                      type="button"
-                      onClick={() => setPrintFormat('thermal58')} 
-                      className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${printFormat === 'thermal58' ? 'bg-slate-950 text-white' : 'bg-slate-200 text-slate-700'}`}
-                    >
-                      Thermal 58mm
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setPrintFormat('thermal80')} 
-                      className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${printFormat === 'thermal80' ? 'bg-slate-950 text-white' : 'bg-slate-200 text-slate-700'}`}
-                    >
-                      Thermal 80mm
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setPrintFormat('dotmatrix')} 
-                      className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${printFormat === 'dotmatrix' ? 'bg-slate-950 text-white' : 'bg-slate-200 text-slate-700'}`}
-                    >
-                      Dot Matrix / A4
-                    </button>
+                    <button type="button" onClick={() => setPrintFormat('thermal58')} className={`px-2.5 py-1 rounded text-xs font-bold ${printFormat === 'thermal58' ? 'bg-slate-950 text-white' : 'bg-slate-200'}`}>Thermal 58mm</button>
+                    <button type="button" onClick={() => setPrintFormat('thermal80')} className={`px-2.5 py-1 rounded text-xs font-bold ${printFormat === 'thermal80' ? 'bg-slate-950 text-white' : 'bg-slate-200'}`}>Thermal 80mm</button>
+                    <button type="button" onClick={() => setPrintFormat('dotmatrix')} className={`px-2.5 py-1 rounded text-xs font-bold ${printFormat === 'dotmatrix' ? 'bg-slate-950 text-white' : 'bg-slate-200'}`}>Dot Matrix / A4</button>
                   </div>
                 </div>
 
-                {/* Status Bluetooth Scanner */}
                 {bluetoothStatus && (
                   <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 text-xs font-semibold flex items-center gap-2 animate-pulse">
                     <i className="fa-brands fa-bluetooth text-base text-sky-600"></i>
@@ -1742,129 +1363,71 @@
                   </div>
                 )}
 
-                {/* AREA TAMPILAN STRUK */}
-                <div 
-                  id="printable-area" 
-                  className={`mx-auto bg-white text-black ${
-                    printFormat === 'thermal58' ? 'max-w-[54mm]' : printFormat === 'thermal80' ? 'max-w-[76mm]' : 'w-full'
-                  }`}
-                >
+                <div id="printable-area" className={`mx-auto bg-white text-black ${printFormat === 'thermal58' ? 'max-w-[54mm]' : printFormat === 'thermal80' ? 'max-w-[76mm]' : 'w-full'}`}>
                   <div className="text-center border-b border-dashed border-black pb-2 mb-2">
-                    <h2 className="font-black text-xs sm:text-sm tracking-wider uppercase">{profile.name}</h2>
-                    <p className="text-[9px] sm:text-[10px] leading-tight">{profile.address}</p>
-                    <p className="text-[9px] sm:text-[10px]">Telp/WA: {profile.phone}</p>
-                    <div className="mt-1 font-bold text-[10px] sm:text-[11px] uppercase tracking-widest">
-                      {printFormat === 'dotmatrix' ? '*** FAKTUR PENJUALAN & SURAT JALAN ***' : '*** STRUK PENJUALAN RESMI ***'}
-                    </div>
+                    <h2 className="font-black text-xs sm:text-sm uppercase">{profile.name}</h2>
+                    <p className="text-[9px]">{profile.address}</p>
+                    <p className="text-[9px]">Telp/WA: {profile.phone}</p>
+                    <div className="mt-1 font-bold text-[10px] uppercase">*** NOTA RESMI KASIR ***</div>
                   </div>
 
-                  <div className="flex justify-between text-[9px] sm:text-[10px] mb-1">
+                  <div className="flex justify-between text-[9px] mb-1">
                     <span>No: <strong>{printReceipt.id}</strong></span>
                     <span>Tgl: {printReceipt.date}</span>
                   </div>
-                  <div className="text-[9px] sm:text-[10px] mb-2">
+                  <div className="text-[9px] mb-2">
                     <span>Pelanggan: <strong>{printReceipt.customer}</strong></span>
                   </div>
 
-                  {/* Tabel Daftar Belanja */}
                   <div className="border-t border-b border-dashed border-black py-1.5 space-y-1.5 my-1">
                     {printReceipt.items.map((item, i) => (
-                      <div key={i} className="flex justify-between text-[10px] sm:text-[11px] leading-tight">
-                        <div className="pr-1">
+                      <div key={i} className="flex justify-between text-[10px] leading-tight">
+                        <div>
                           <div className="font-bold">{item.name}</div>
-                          <div className="text-[9px] sm:text-[10px] text-gray-700">
-                            {item.qty} {item.sellingUnit} x {formatRupiah(item.activePrice)}
-                          </div>
+                          <div className="text-[9px] text-gray-700">{item.qty} {item.sellingUnit} x {formatRupiah(item.activePrice)}</div>
                         </div>
-                        <span className="font-bold shrink-0">{formatRupiah(item.activePrice * item.qty)}</span>
+                        <span className="font-bold">{formatRupiah(item.activePrice * item.qty)}</span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Rincian Total */}
-                  <div className="space-y-1 text-right text-[10px] sm:text-[11px] pt-1">
-                    {printReceipt.discount > 0 && (
-                      <div className="flex justify-between text-gray-700">
-                        <span>Diskon:</span>
-                        <span>-{formatRupiah(printReceipt.discount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-black text-xs sm:text-sm pt-1 border-t border-black">
-                      <span>TOTAL TAGIHAN:</span>
+                  <div className="space-y-1 text-right text-[10px] pt-1">
+                    <div className="flex justify-between font-black text-xs pt-1 border-t border-black">
+                      <span>TOTAL:</span>
                       <span>{formatRupiah(printReceipt.total)}</span>
                     </div>
-                    <div className="flex justify-between text-gray-700 text-[9px] sm:text-[10px]">
-                      <span>Metode Pembayaran:</span>
+                    <div className="flex justify-between text-gray-700 text-[9px]">
+                      <span>Metode:</span>
                       <span>{printReceipt.paymentMethod}</span>
                     </div>
-                    {printReceipt.paymentMethod === 'Tunai' && (
-                      <>
-                        <div className="flex justify-between text-gray-700 text-[9px] sm:text-[10px]">
-                          <span>Tunai Diterima:</span>
-                          <span>{formatRupiah(printReceipt.paid)}</span>
-                        </div>
-                        <div className="flex justify-between text-gray-700 text-[9px] sm:text-[10px]">
-                          <span>Kembalian:</span>
-                          <span>{formatRupiah(printReceipt.change)}</span>
-                        </div>
-                      </>
-                    )}
                   </div>
 
-                  {/* Format Tanda Tangan untuk Dot Matrix / Faktur Pengiriman */}
-                  {printFormat === 'dotmatrix' && (
-                    <div className="grid grid-cols-3 gap-2 pt-6 text-center text-[9px]">
-                      <div>
-                        <div>Penerima / Mandor,</div>
-                        <div className="h-10"></div>
-                        <div className="border-t border-black font-bold">( {printReceipt.customer} )</div>
-                      </div>
-                      <div>
-                        <div>Supir / Pengirim,</div>
-                        <div className="h-10"></div>
-                        <div className="border-t border-black font-bold">( .................... )</div>
-                      </div>
-                      <div>
-                        <div>Hormat Kami / Kasir,</div>
-                        <div className="h-10"></div>
-                        <div className="border-t border-black font-bold">( TB. Cincin Putih )</div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="text-center text-[8px] sm:text-[9px] text-gray-700 border-t border-dashed border-black pt-2 mt-2 leading-tight">
+                  <div className="text-center text-[8px] text-gray-700 border-t border-dashed border-black pt-2 mt-2 leading-tight">
                     {profile.footer}
                   </div>
                 </div>
 
-                {/* TOMBOL AKSI CETAK: BLUETOOTH ESC/POS & SYSTEM PRINT */}
                 <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-200">
-                  {/* Tombol Cetak Bluetooth ESC/POS */}
                   <button 
                     type="button"
                     disabled={isBluetoothPrinting}
-                    onClick={() => printDirectBluetooth(printReceipt, printFormat === 'thermal80' ? 80 : 58)} 
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
+                    onClick={() => printBluetoothESC(printReceipt, printFormat === 'thermal80' ? 80 : 58)} 
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2"
                   >
                     <i className="fa-brands fa-bluetooth text-sm"></i>
-                    <span>{isBluetoothPrinting ? 'Sedang Mencetak...' : 'Cetak Bluetooth (ESC/POS)'}</span>
+                    <span>{isBluetoothPrinting ? 'Mencetak...' : 'Cetak Bluetooth (ESC/POS)'}</span>
                   </button>
-
-                  {/* Tombol Cetak USB / Driver Windows */}
                   <button 
                     type="button"
-                    onClick={() => executeSystemPrint(printFormat)} 
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                    onClick={() => printSystemDriver(printFormat)} 
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-xs"
                   >
-                    <i className="fa-solid fa-print"></i>
-                    <span>Cetak System / PDF</span>
+                    Cetak Driver System / PDF
                   </button>
-
-                  {/* Tombol Tutup */}
                   <button 
                     type="button"
                     onClick={() => setPrintReceipt(null)} 
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-200 text-slate-800 font-bold text-xs"
                   >
                     Tutup
                   </button>
