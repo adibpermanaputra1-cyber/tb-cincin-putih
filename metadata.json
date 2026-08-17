@@ -1,0 +1,6 @@
+{
+  "name": "TB. Cincin Putih - Kasir & Toko Bangunan",
+  "description": "Sistem Kasir Penjualan, Kontrol Stok Material, Buku Piutang & Utang, serta Laporan Keuangan Toko Bangunan TB. Cincin Putih.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
