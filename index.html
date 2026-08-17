@@ -56,7 +56,7 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef } = React;
 
-    // --- 24 MASTER DATA MATERIAL DENGAN KONFIGURASI MULTI-SATUAN ---
+    // --- 24 MASTER DATA MATERIAL DENGAN MULTI-SATUAN ---
     const DEFAULT_PRODUCTS = [
       { 
         id: 'p1', 
@@ -221,43 +221,136 @@
 
     const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
+    // ========================================================
+    // 🖨️ FUNGSI GENERATOR PERINTAH BINARY ESC/POS UNTUK BLUETOOTH
+    // ========================================================
+    function generateEscPosCommands(receipt, profile, paperWidth = 58) {
+      const maxChars = paperWidth === 80 ? 48 : 32;
+      const encoder = new TextEncoder();
+      const chunks = [];
+
+      const addRaw = (bytes) => chunks.push(new Uint8Array(bytes));
+      const addText = (str) => chunks.push(encoder.encode(str));
+
+      // ESC/POS Command Constants
+      const ESC = 0x1B;
+      const GS = 0x1D;
+
+      // Inisialisasi printer & reset setting
+      addRaw([ESC, 0x40]);
+
+      // Rata Tengah (Align Center)
+      addRaw([ESC, 0x61, 0x01]);
+
+      // Judul Toko (Bold + Double Height)
+      addRaw([ESC, 0x45, 0x01]); // Bold ON
+      addRaw([GS, 0x21, 0x11]);  // Double Height/Width
+      addText((profile.name || 'TB. CINCIN PUTIH') + '\n');
+      
+      // Normal Font
+      addRaw([GS, 0x21, 0x00]);  // Normal size
+      addRaw([ESC, 0x45, 0x00]); // Bold OFF
+      addText((profile.address || 'Jl. Cincin Putih Raya') + '\n');
+      addText('Telp/WA: ' + (profile.phone || '-') + '\n');
+      addText('*** NOTA RESMI KASIR ***\n');
+
+      // Garis Pembatas
+      addText('-'.repeat(maxChars) + '\n');
+
+      // Rata Kiri (Align Left)
+      addRaw([ESC, 0x61, 0x00]);
+      addText(`No.Nota: ${receipt.id}\n`);
+      addText(`Tanggal: ${receipt.date}\n`);
+      addText(`Mandor : ${receipt.customer}\n`);
+      addText('-'.repeat(maxChars) + '\n');
+
+      // Rincian Barang
+      receipt.items.forEach((item) => {
+        addRaw([ESC, 0x45, 0x01]); // Bold item name
+        addText(`${item.name}\n`);
+        addRaw([ESC, 0x45, 0x00]); // Bold OFF
+
+        const qtyPrice = `  ${item.qty} ${item.sellingUnit} x ${item.activePrice.toLocaleString('id-ID')}`;
+        const totalItem = (item.qty * item.activePrice).toLocaleString('id-ID');
+        const spaces = Math.max(1, maxChars - qtyPrice.length - totalItem.length);
+        addText(qtyPrice + ' '.repeat(spaces) + totalItem + '\n');
+      });
+
+      addText('-'.repeat(maxChars) + '\n');
+
+      // Bagian Total (Align Right)
+      addRaw([ESC, 0x61, 0x02]); // Align Right
+      if (receipt.discount > 0) {
+        addText(`Diskon: -Rp ${receipt.discount.toLocaleString('id-ID')}\n`);
+      }
+
+      addRaw([ESC, 0x45, 0x01]); // Bold ON
+      addText(`TOTAL: Rp ${receipt.total.toLocaleString('id-ID')}\n`);
+      addRaw([ESC, 0x45, 0x00]); // Bold OFF
+
+      addText(`Metode: ${receipt.paymentMethod}\n`);
+      if (receipt.paymentMethod === 'Tunai') {
+        addText(`Bayar : Rp ${(receipt.paid || receipt.total).toLocaleString('id-ID')}\n`);
+        addText(`Kembali: Rp ${(receipt.change || 0).toLocaleString('id-ID')}\n`);
+      }
+
+      // Garis Pembatas & Footer
+      addRaw([ESC, 0x61, 0x01]); // Align Center
+      addText('-'.repeat(maxChars) + '\n');
+      addText((profile.footer || 'Barang yang sudah dibeli tidak dapat ditukar/dikembalikan.') + '\n');
+      addText('Terima Kasih Atas Kunjungan Anda\n\n\n');
+
+      // Perintah Pemotong Kertas Otomatis (Auto-Cut) & Feed 3 baris
+      addRaw([GS, 0x56, 0x41, 0x03]);
+
+      // Gabungkan seluruh Uint8Array menjadi satu Buffer utuh
+      const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
+      const combined = new Uint8Array(totalLen);
+      let offset = 0;
+      for (const chunk of chunks) {
+        combined.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return combined;
+    }
+
     function App() {
       const [currentTab, setCurrentTab] = useState('inventory');
       const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
       // STATE LOCALSTORAGE
       const [products, setProducts] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_products_v7');
+        const saved = localStorage.getItem('tb_cincinputih_products_v8');
         return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
       });
 
       const [customers, setCustomers] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_customers_v7');
+        const saved = localStorage.getItem('tb_cincinputih_customers_v8');
         return saved ? JSON.parse(saved) : DEFAULT_CUSTOMERS;
       });
 
       const [suppliers, setSuppliers] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_suppliers_v7');
+        const saved = localStorage.getItem('tb_cincinputih_suppliers_v8');
         return saved ? JSON.parse(saved) : DEFAULT_SUPPLIERS;
       });
 
       const [employees, setEmployees] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_employees_v7');
+        const saved = localStorage.getItem('tb_cincinputih_employees_v8');
         return saved ? JSON.parse(saved) : DEFAULT_EMPLOYEES;
       });
 
       const [transactions, setTransactions] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_transactions_v7');
+        const saved = localStorage.getItem('tb_cincinputih_transactions_v8');
         return saved ? JSON.parse(saved) : DEFAULT_TRANSACTIONS;
       });
 
       const [expenses, setExpenses] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_expenses_v7');
+        const saved = localStorage.getItem('tb_cincinputih_expenses_v8');
         return saved ? JSON.parse(saved) : DEFAULT_EXPENSES;
       });
 
       const [profile, setProfile] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_profile_v7');
+        const saved = localStorage.getItem('tb_cincinputih_profile_v8');
         return saved ? JSON.parse(saved) : {
           name: 'TB. CINCIN PUTIH',
           address: 'Jl. Cincin Putih Raya No. 88, Cibitung, Bekasi',
@@ -301,7 +394,9 @@
 
       // CETAK NOTA STATE
       const [printReceipt, setPrintReceipt] = useState(null);
-      const [printFormat, setPrintFormat] = useState('thermal58'); // 'thermal58', 'thermal80', 'dotmatrix'
+      const [printFormat, setPrintFormat] = useState('thermal58');
+      const [isBluetoothPrinting, setIsBluetoothPrinting] = useState(false);
+      const [bluetoothStatus, setBluetoothStatus] = useState('');
 
       // SHORTCUT F2
       useEffect(() => {
@@ -316,24 +411,100 @@
       }, []);
 
       // SYNC LOCALSTORAGE
-      useEffect(() => { localStorage.setItem('tb_cincinputih_products_v7', JSON.stringify(products)); }, [products]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_customers_v7', JSON.stringify(customers)); }, [customers]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_suppliers_v7', JSON.stringify(suppliers)); }, [suppliers]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_employees_v7', JSON.stringify(employees)); }, [employees]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_transactions_v7', JSON.stringify(transactions)); }, [transactions]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_expenses_v7', JSON.stringify(expenses)); }, [expenses]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_profile_v7', JSON.stringify(profile)); }, [profile]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_products_v8', JSON.stringify(products)); }, [products]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_customers_v8', JSON.stringify(customers)); }, [customers]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_suppliers_v8', JSON.stringify(suppliers)); }, [suppliers]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_employees_v8', JSON.stringify(employees)); }, [employees]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_transactions_v8', JSON.stringify(transactions)); }, [transactions]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_expenses_v8', JSON.stringify(expenses)); }, [expenses]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_profile_v8', JSON.stringify(profile)); }, [profile]);
 
-      // FUNGSI UPDATE DINAMIS CSS CETAK SEBELUM WINDOW.PRINT
-      const executePrint = (format) => {
+      // ========================================================
+      // 🔵 FUNGSI CETAK LANGSUNG VIA WEB BLUETOOTH API ESC/POS
+      // ========================================================
+      const printDirectBluetooth = async (receipt, paperWidth = 58) => {
+        if (!navigator.bluetooth) {
+          alert('Browser Anda belum mendukung Web Bluetooth API. Silakan gunakan Google Chrome di HP Android / Laptop, atau gunakan tombol "Cetak via Driver System".');
+          return;
+        }
+
+        try {
+          setIsBluetoothPrinting(true);
+          setBluetoothStatus('Memindai printer Bluetooth terdekat...');
+
+          // Request Bluetooth Device
+          const device = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [
+              '000018f0-0000-1000-8000-00805f9b34fb',
+              'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+              '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+              '0000ff00-0000-1000-8000-00805f9b34fb',
+              '0000fee7-0000-1000-8000-00805f9b34fb'
+            ]
+          });
+
+          setBluetoothStatus(`Menghubungkan ke ${device.name || 'Printer Thermal'}...`);
+          const server = await device.gatt.connect();
+
+          // Cari Service & Karakteristik yang Bisa Ditulis (Write)
+          const services = await server.getPrimaryServices();
+          let writeChar = null;
+
+          for (const service of services) {
+            try {
+              const characteristics = await service.getCharacteristics();
+              for (const c of characteristics) {
+                if (c.properties.write || c.properties.writeWithoutResponse) {
+                  writeChar = c;
+                  break;
+                }
+              }
+              if (writeChar) break;
+            } catch (err) {
+              console.warn('Gagal membaca karakteristik service:', err);
+            }
+          }
+
+          if (!writeChar) {
+            throw new Error('Tidak dapat menemukan jalur pengiriman data (Write Characteristic) pada printer ini.');
+          }
+
+          setBluetoothStatus('Mengirim data struk ESC/POS...');
+          const escPosData = generateEscPosCommands(receipt, profile, paperWidth);
+
+          // Kirim per chunk (512 byte) agar tidak buffer overflow
+          const CHUNK_SIZE = 512;
+          for (let i = 0; i < escPosData.length; i += CHUNK_SIZE) {
+            const slice = escPosData.slice(i, i + CHUNK_SIZE);
+            if (writeChar.writeValueWithoutResponse) {
+              await writeChar.writeValueWithoutResponse(slice);
+            } else {
+              await writeChar.writeValue(slice);
+            }
+          }
+
+          setBluetoothStatus('Struk berhasil dikirim ke printer!');
+          setTimeout(() => {
+            setBluetoothStatus('');
+            setIsBluetoothPrinting(false);
+          }, 1500);
+
+        } catch (error) {
+          console.error('Bluetooth Print Error:', error);
+          alert('Gagal cetak Bluetooth: ' + (error.message || error));
+          setIsBluetoothPrinting(false);
+          setBluetoothStatus('');
+        }
+      };
+
+      // CETAK STANDAR SYSTEM (USB / DRIVER WINDOWS / PDF)
+      const executeSystemPrint = (format) => {
         const styleEl = document.getElementById('dynamic-print-style');
         if (styleEl) {
           if (format === 'thermal58') {
             styleEl.innerHTML = `
-              @page {
-                size: 58mm auto;
-                margin: 0;
-              }
+              @page { size: 58mm auto; margin: 0; }
               @media print {
                 html, body {
                   width: 58mm !important;
@@ -345,12 +516,8 @@
                   font-size: 11px !important;
                   line-height: 1.2 !important;
                 }
-                body * {
-                  visibility: hidden !important;
-                }
-                #printable-area, #printable-area * {
-                  visibility: visible !important;
-                }
+                body * { visibility: hidden !important; }
+                #printable-area, #printable-area * { visibility: visible !important; }
                 #printable-area {
                   position: absolute !important;
                   left: 0 !important;
@@ -364,10 +531,7 @@
             `;
           } else if (format === 'thermal80') {
             styleEl.innerHTML = `
-              @page {
-                size: 80mm auto;
-                margin: 0;
-              }
+              @page { size: 80mm auto; margin: 0; }
               @media print {
                 html, body {
                   width: 80mm !important;
@@ -379,12 +543,8 @@
                   font-size: 12px !important;
                   line-height: 1.25 !important;
                 }
-                body * {
-                  visibility: hidden !important;
-                }
-                #printable-area, #printable-area * {
-                  visibility: visible !important;
-                }
+                body * { visibility: hidden !important; }
+                #printable-area, #printable-area * { visibility: visible !important; }
                 #printable-area {
                   position: absolute !important;
                   left: 0 !important;
@@ -397,12 +557,8 @@
               }
             `;
           } else {
-            // Dot Matrix / A4
             styleEl.innerHTML = `
-              @page {
-                size: A4 portrait;
-                margin: 10mm;
-              }
+              @page { size: A4 portrait; margin: 10mm; }
               @media print {
                 html, body {
                   width: 100% !important;
@@ -413,12 +569,8 @@
                   font-family: 'Courier New', Courier, monospace !important;
                   font-size: 12px !important;
                 }
-                body * {
-                  visibility: hidden !important;
-                }
-                #printable-area, #printable-area * {
-                  visibility: visible !important;
-                }
+                body * { visibility: hidden !important; }
+                #printable-area, #printable-area * { visibility: visible !important; }
                 #printable-area {
                   position: absolute !important;
                   left: 0 !important;
@@ -431,9 +583,7 @@
             `;
           }
         }
-        setTimeout(() => {
-          window.print();
-        }, 100);
+        setTimeout(() => window.print(), 100);
       };
 
       // BUKA MODAL TAMBAH
@@ -675,7 +825,7 @@
                   <div className="overflow-hidden">
                     <h1 className="text-sm font-black tracking-tight text-slate-100 truncate">{profile.name}</h1>
                     <span className="inline-block px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      MULTI-SATUAN POS
+                      BLUETOOTH POS AKTIF
                     </span>
                   </div>
                 </div>
@@ -1550,7 +1700,7 @@
           )}
 
           {/* ======================================================== */}
-          {/* 🖨️ 2. PERBAIKAN CETAK STRUK THERMAL & DOT MATRIX        */}
+          {/* 🖨️ 2. MODAL CETAK STRUK BLUETOOTH & SYSTEM PRINT         */}
           {/* ======================================================== */}
           {printReceipt && (
             <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-4 no-print overflow-y-auto">
@@ -1558,7 +1708,7 @@
                 
                 {/* Pilihan Toggle Format Ukuran Kertas */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b border-slate-200 gap-2">
-                  <span className="font-bold text-slate-800 text-xs">Pilih Ukuran Printer:</span>
+                  <span className="font-bold text-slate-800 text-xs">Pilih Ukuran Kertas:</span>
                   <div className="flex gap-1">
                     <button 
                       type="button"
@@ -1584,7 +1734,15 @@
                   </div>
                 </div>
 
-                {/* AREA YANG DICETAK */}
+                {/* Status Bluetooth Scanner */}
+                {bluetoothStatus && (
+                  <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 text-xs font-semibold flex items-center gap-2 animate-pulse">
+                    <i className="fa-brands fa-bluetooth text-base text-sky-600"></i>
+                    <span>{bluetoothStatus}</span>
+                  </div>
+                )}
+
+                {/* AREA TAMPILAN STRUK */}
                 <div 
                   id="printable-area" 
                   className={`mx-auto bg-white text-black ${
@@ -1679,19 +1837,34 @@
                   </div>
                 </div>
 
-                {/* Tombol Cetak & Tutup */}
-                <div className="flex gap-2 pt-2 border-t border-slate-200">
+                {/* TOMBOL AKSI CETAK: BLUETOOTH ESC/POS & SYSTEM PRINT */}
+                <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-200">
+                  {/* Tombol Cetak Bluetooth ESC/POS */}
                   <button 
                     type="button"
-                    onClick={() => executePrint(printFormat)} 
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
+                    disabled={isBluetoothPrinting}
+                    onClick={() => printDirectBluetooth(printReceipt, printFormat === 'thermal80' ? 80 : 58)} 
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
                   >
-                    <i className="fa-solid fa-print"></i> Cetak Dokumen Sekarang
+                    <i className="fa-brands fa-bluetooth text-sm"></i>
+                    <span>{isBluetoothPrinting ? 'Sedang Mencetak...' : 'Cetak Bluetooth (ESC/POS)'}</span>
                   </button>
+
+                  {/* Tombol Cetak USB / Driver Windows */}
+                  <button 
+                    type="button"
+                    onClick={() => executeSystemPrint(printFormat)} 
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <i className="fa-solid fa-print"></i>
+                    <span>Cetak System / PDF</span>
+                  </button>
+
+                  {/* Tombol Tutup */}
                   <button 
                     type="button"
                     onClick={() => setPrintReceipt(null)} 
-                    className="px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors"
                   >
                     Tutup
                   </button>
