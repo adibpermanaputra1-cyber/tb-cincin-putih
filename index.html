@@ -51,32 +51,114 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef } = React;
 
-    // --- 24 DATA BARANG MATERIAL RESMI TB. CINCIN PUTIH DENGAN SPESIFIKASI LENGKAP ---
+    // --- 24 DATA MASTER MATERIAL ASLI DENGAN MULTI-SATUAN TURUNAN ---
     const DEFAULT_PRODUCTS = [
-      { id: 'p1', name: 'Semen Tiga Roda 50kg', category: 'Semen & Pasir', price: 95000, wholesalePrice: 92000, costPrice: 85000, stock: 200, minStock: 25, unit: 'Sak', code: 'SMN-01', location: 'Gudang Utama A-01', multiUnit: '1 Sak = 50 Kg', image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400' },
-      { id: 'p2', name: 'Semen Rajawali 40kg', category: 'Semen & Pasir', price: 82000, wholesalePrice: 79000, costPrice: 74000, stock: 150, minStock: 20, unit: 'Sak', code: 'SMN-02', location: 'Gudang Utama A-02', multiUnit: '1 Sak = 40 Kg', image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400' },
-      { id: 'p3', name: 'Paku 1" (Kayu Halus)', category: 'Paku & Baut', price: 30000, wholesalePrice: 28000, costPrice: 24000, stock: 80, minStock: 15, unit: 'Kg', code: 'PKU-01', location: 'Rak Besi B-01', multiUnit: '1 Dus = 25 Kg, 1 Kg = 10 Ons', image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
-      { id: 'p4', name: 'Paku 1 1/2" - 5" Standar', category: 'Paku & Baut', price: 25000, wholesalePrice: 23000, costPrice: 20000, stock: 120, minStock: 25, unit: 'Kg', code: 'PKU-02', location: 'Rak Besi B-02', multiUnit: '1 Dus = 30 Kg', image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
-      { id: 'p5', name: 'Paku Seng Putih Payung', category: 'Paku & Baut', price: 35000, wholesalePrice: 32000, costPrice: 28000, stock: 60, minStock: 10, unit: 'Kg', code: 'PKU-03', location: 'Rak Besi B-03', multiUnit: '1 Kotak = 100 Pcs', image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
-      { id: 'p6', name: 'Paku Seng Warna 2"-5"', category: 'Paku & Baut', price: 45000, wholesalePrice: 42000, costPrice: 36000, stock: 50, minStock: 10, unit: 'Kg', code: 'PKU-04', location: 'Rak Besi B-04', multiUnit: '1 Kotak = 100 Pcs', image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
-      { id: 'p7', name: 'Paku Berlian Beton', category: 'Paku & Baut', price: 35000, wholesalePrice: 31000, costPrice: 27000, stock: 70, minStock: 15, unit: 'Kg', code: 'PKU-05', location: 'Rak Besi B-05', multiUnit: '1 Kotak = 50 Biji', image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
-      { id: 'p8', name: 'Triplek 3 mm (122x244)', category: 'Kayu & Triplek', price: 60000, wholesalePrice: 57000, costPrice: 48000, stock: 100, minStock: 20, unit: 'Lembar', code: 'TPL-03', location: 'Gudang Kayu C-01', multiUnit: '1 Ikat = 10 Lembar', image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
-      { id: 'p9', name: 'Triplek 6 mm (122x244)', category: 'Kayu & Triplek', price: 110000, wholesalePrice: 105000, costPrice: 90000, stock: 80, minStock: 15, unit: 'Lembar', code: 'TPL-06', location: 'Gudang Kayu C-02', multiUnit: '1 Ikat = 10 Lembar', image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
-      { id: 'p10', name: 'Triplek 9 mm (122x244)', category: 'Kayu & Triplek', price: 150000, wholesalePrice: 145000, costPrice: 125000, stock: 60, minStock: 10, unit: 'Lembar', code: 'TPL-09', location: 'Gudang Kayu C-03', multiUnit: '1 Palet = 50 Lembar', image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
-      { id: 'p11', name: 'Triplek 12 mm (122x244)', category: 'Kayu & Triplek', price: 210000, wholesalePrice: 200000, costPrice: 175000, stock: 45, minStock: 10, unit: 'Lembar', code: 'TPL-12', location: 'Gudang Kayu C-04', multiUnit: '1 Palet = 40 Lembar', image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
-      { id: 'p12', name: 'GRC Board 4mm Standar', category: 'Plafon & Partisi', price: 75000, wholesalePrice: 71000, costPrice: 62000, stock: 90, minStock: 15, unit: 'Lembar', code: 'GRC-01', location: 'Gudang Plafon D-01', multiUnit: '1 Palet = 100 Lembar', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p13', name: 'Gypsum Board 9mm Elephant', category: 'Plafon & Partisi', price: 85000, wholesalePrice: 80000, costPrice: 70000, stock: 75, minStock: 15, unit: 'Lembar', code: 'GPS-01', location: 'Gudang Plafon D-02', multiUnit: '1 Palet = 80 Lembar', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p14', name: 'Lisplang GRC Urat Kayu 4m', category: 'Plafon & Partisi', price: 75000, wholesalePrice: 70000, costPrice: 60000, stock: 85, minStock: 15, unit: 'Batang', code: 'LSP-01', location: 'Gudang Plafon D-03', multiUnit: '1 Ikat = 5 Batang', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p15', name: 'Kawat Beton Ikat 5.6 kg', category: 'Besi & Baja', price: 130000, wholesalePrice: 122000, costPrice: 110000, stock: 40, minStock: 10, unit: 'Rol', code: 'KWT-01', location: 'Gudang Besi E-01', multiUnit: '1 Rol = 5.6 Kg', image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' },
-      { id: 'p16', name: 'Kawat Simpai 10 kg', category: 'Besi & Baja', price: 230000, wholesalePrice: 215000, costPrice: 195000, stock: 35, minStock: 8, unit: 'Rol', code: 'KWT-02', location: 'Gudang Besi E-02', multiUnit: '1 Rol = 10 Kg', image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' },
-      { id: 'p17', name: 'Kawat Simpai 12 kg', category: 'Besi & Baja', price: 270000, wholesalePrice: 255000, costPrice: 230000, stock: 30, minStock: 8, unit: 'Rol', code: 'KWT-03', location: 'Gudang Besi E-03', multiUnit: '1 Rol = 12 Kg', image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' },
-      { id: 'p18', name: 'Seng Merah ECO 0.25mm 8 Kaki', category: 'Atap & Seng', price: 52000, wholesalePrice: 48000, costPrice: 42000, stock: 120, minStock: 25, unit: 'Lembar', code: 'SNG-01', location: 'Gudang Atap F-01', multiUnit: '1 Kodi = 20 Lembar', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p19', name: 'Seng Biru ECO 0.25mm 8 Kaki', category: 'Atap & Seng', price: 52000, wholesalePrice: 48000, costPrice: 42000, stock: 110, minStock: 25, unit: 'Lembar', code: 'SNG-02', location: 'Gudang Atap F-02', multiUnit: '1 Kodi = 20 Lembar', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p20', name: 'Seng Kingkong Merah 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 95, minStock: 20, unit: 'Lembar', code: 'SNG-03', location: 'Gudang Atap F-03', multiUnit: '1 Kodi = 20 Lembar', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p21', name: 'Seng Kingkong Biru 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 90, minStock: 20, unit: 'Lembar', code: 'SNG-04', location: 'Gudang Atap F-04', multiUnit: '1 Kodi = 20 Lembar', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p22', name: 'Seng Kingkong Navy 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 80, minStock: 20, unit: 'Lembar', code: 'SNG-05', location: 'Gudang Atap F-05', multiUnit: '1 Kodi = 20 Lembar', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
-      { id: 'p23', name: 'Gerobak Sorong ISCO Plat Tebal', category: 'Alat & Perkakas', price: 420000, wholesalePrice: 395000, costPrice: 350000, stock: 15, minStock: 5, unit: 'Unit', code: 'GBK-01', location: 'Area Display Depan G-01', multiUnit: '1 Unit Komplit', image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400' },
-      { id: 'p24', name: 'Gerobak ISCO PVC 10kg Roda Hidup', category: 'Alat & Perkakas', price: 550000, wholesalePrice: 510000, costPrice: 460000, stock: 12, minStock: 4, unit: 'Unit', code: 'GBK-02', location: 'Area Display Depan G-02', multiUnit: '1 Unit Komplit', image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400' }
+      { 
+        id: 'p1', 
+        name: 'Semen Tiga Roda 50kg', 
+        category: 'Semen & Pasir', 
+        price: 95000, 
+        wholesalePrice: 92000, 
+        costPrice: 85000, 
+        stock: 200, 
+        minStock: 25, 
+        unit: 'Sak', 
+        code: 'SMN-01', 
+        location: 'Gudang Utama A-01', 
+        derivedUnits: [
+          { id: 'u1-1', name: 'Kg (Eceran)', conversionRatio: 50, price: 2500 }
+        ],
+        image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400' 
+      },
+      { 
+        id: 'p2', 
+        name: 'Semen Rajawali 40kg', 
+        category: 'Semen & Pasir', 
+        price: 82000, 
+        wholesalePrice: 79000, 
+        costPrice: 74000, 
+        stock: 150, 
+        minStock: 20, 
+        unit: 'Sak', 
+        code: 'SMN-02', 
+        location: 'Gudang Utama A-02', 
+        derivedUnits: [
+          { id: 'u2-1', name: 'Kg (Eceran)', conversionRatio: 40, price: 2400 }
+        ],
+        image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400' 
+      },
+      { 
+        id: 'p3', 
+        name: 'Paku 1" (Kayu Halus)', 
+        category: 'Paku & Baut', 
+        price: 30000, 
+        wholesalePrice: 28000, 
+        costPrice: 24000, 
+        stock: 80, 
+        minStock: 15, 
+        unit: 'Kg', 
+        code: 'PKU-01', 
+        location: 'Rak Besi B-01', 
+        derivedUnits: [
+          { id: 'u3-1', name: 'Ons (1/10 Kg)', conversionRatio: 10, price: 3500 },
+          { id: 'u3-2', name: '1/2 Kg', conversionRatio: 2, price: 16000 }
+        ],
+        image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' 
+      },
+      { 
+        id: 'p4', 
+        name: 'Paku 1 1/2" - 5" Standar', 
+        category: 'Paku & Baut', 
+        price: 25000, 
+        wholesalePrice: 23000, 
+        costPrice: 20000, 
+        stock: 120, 
+        minStock: 25, 
+        unit: 'Kg', 
+        code: 'PKU-02', 
+        location: 'Rak Besi B-02', 
+        derivedUnits: [
+          { id: 'u4-1', name: 'Ons (1/10 Kg)', conversionRatio: 10, price: 3000 },
+          { id: 'u4-2', name: 'Dus (25 Kg)', conversionRatio: 0.04, price: 575000 }
+        ],
+        image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' 
+      },
+      { id: 'p5', name: 'Paku Seng Putih Payung', category: 'Paku & Baut', price: 35000, wholesalePrice: 32000, costPrice: 28000, stock: 60, minStock: 10, unit: 'Kg', code: 'PKU-03', location: 'Rak Besi B-03', derivedUnits: [], image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
+      { id: 'p6', name: 'Paku Seng Warna 2"-5"', category: 'Paku & Baut', price: 45000, wholesalePrice: 42000, costPrice: 36000, stock: 50, minStock: 10, unit: 'Kg', code: 'PKU-04', location: 'Rak Besi B-04', derivedUnits: [], image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
+      { id: 'p7', name: 'Paku Berlian Beton', category: 'Paku & Baut', price: 35000, wholesalePrice: 31000, costPrice: 27000, stock: 70, minStock: 15, unit: 'Kg', code: 'PKU-05', location: 'Rak Besi B-05', derivedUnits: [{ id: 'u7-1', name: 'Kotak (50 Biji)', conversionRatio: 4, price: 10000 }], image: 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=400' },
+      { id: 'p8', name: 'Triplek 3 mm (122x244)', category: 'Kayu & Triplek', price: 60000, wholesalePrice: 57000, costPrice: 48000, stock: 100, minStock: 20, unit: 'Lembar', code: 'TPL-03', location: 'Gudang Kayu C-01', derivedUnits: [], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
+      { id: 'p9', name: 'Triplek 6 mm (122x244)', category: 'Kayu & Triplek', price: 110000, wholesalePrice: 105000, costPrice: 90000, stock: 80, minStock: 15, unit: 'Lembar', code: 'TPL-06', location: 'Gudang Kayu C-02', derivedUnits: [], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
+      { id: 'p10', name: 'Triplek 9 mm (122x244)', category: 'Kayu & Triplek', price: 150000, wholesalePrice: 145000, costPrice: 125000, stock: 60, minStock: 10, unit: 'Lembar', code: 'TPL-09', location: 'Gudang Kayu C-03', derivedUnits: [], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
+      { id: 'p11', name: 'Triplek 12 mm (122x244)', category: 'Kayu & Triplek', price: 210000, wholesalePrice: 200000, costPrice: 175000, stock: 45, minStock: 10, unit: 'Lembar', code: 'TPL-12', location: 'Gudang Kayu C-04', derivedUnits: [], image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=400' },
+      { id: 'p12', name: 'GRC Board 4mm Standar', category: 'Plafon & Partisi', price: 75000, wholesalePrice: 71000, costPrice: 62000, stock: 90, minStock: 15, unit: 'Lembar', code: 'GRC-01', location: 'Gudang Plafon D-01', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
+      { id: 'p13', name: 'Gypsum Board 9mm Elephant', category: 'Plafon & Partisi', price: 85000, wholesalePrice: 80000, costPrice: 70000, stock: 75, minStock: 15, unit: 'Lembar', code: 'GPS-01', location: 'Gudang Plafon D-02', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
+      { id: 'p14', name: 'Lisplang GRC Urat Kayu 4m', category: 'Plafon & Partisi', price: 75000, wholesalePrice: 70000, costPrice: 60000, stock: 85, minStock: 15, unit: 'Batang', code: 'LSP-01', location: 'Gudang Plafon D-03', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
+      { 
+        id: 'p15', 
+        name: 'Kawat Beton Ikat 5.6 kg', 
+        category: 'Besi & Baja', 
+        price: 130000, 
+        wholesalePrice: 122000, 
+        costPrice: 110000, 
+        stock: 40, 
+        minStock: 10, 
+        unit: 'Rol', 
+        code: 'KWT-01', 
+        location: 'Gudang Besi E-01', 
+        derivedUnits: [
+          { id: 'u15-1', name: 'Kg (Eceran)', conversionRatio: 5.6, price: 26000 }
+        ],
+        image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' 
+      },
+      { id: 'p16', name: 'Kawat Simpai 10 kg', category: 'Besi & Baja', price: 230000, wholesalePrice: 215000, costPrice: 195000, stock: 35, minStock: 8, unit: 'Rol', code: 'KWT-02', location: 'Gudang Besi E-02', derivedUnits: [{ id: 'u16-1', name: 'Kg (Eceran)', conversionRatio: 10, price: 25000 }], image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' },
+      { id: 'p17', name: 'Kawat Simpai 12 kg', category: 'Besi & Baja', price: 270000, wholesalePrice: 255000, costPrice: 230000, stock: 30, minStock: 8, unit: 'Rol', code: 'KWT-03', location: 'Gudang Besi E-03', derivedUnits: [{ id: 'u17-1', name: 'Kg (Eceran)', conversionRatio: 12, price: 25000 }], image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=400' },
+      { id: 'p18', name: 'Seng Merah ECO 0.25mm 8 Kaki', category: 'Atap & Seng', price: 52000, wholesalePrice: 48000, costPrice: 42000, stock: 120, minStock: 25, unit: 'Lembar', code: 'SNG-01', location: 'Gudang Atap F-01', derivedUnits: [{ id: 'u18-1', name: 'Kodi (20 Lembar)', conversionRatio: 0.05, price: 980000 }], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
+      { id: 'p19', name: 'Seng Biru ECO 0.25mm 8 Kaki', category: 'Atap & Seng', price: 52000, wholesalePrice: 48000, costPrice: 42000, stock: 110, minStock: 25, unit: 'Lembar', code: 'SNG-02', location: 'Gudang Atap F-02', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
+      { id: 'p20', name: 'Seng Kingkong Merah 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 95, minStock: 20, unit: 'Lembar', code: 'SNG-03', location: 'Gudang Atap F-03', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
+      { id: 'p21', name: 'Seng Kingkong Biru 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 90, minStock: 20, unit: 'Lembar', code: 'SNG-04', location: 'Gudang Atap F-04', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
+      { id: 'p22', name: 'Seng Kingkong Navy 0.30mm 8 Kaki', category: 'Atap & Seng', price: 55000, wholesalePrice: 51000, costPrice: 45000, stock: 80, minStock: 20, unit: 'Lembar', code: 'SNG-05', location: 'Gudang Atap F-05', derivedUnits: [], image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400' },
+      { id: 'p23', name: 'Gerobak Sorong ISCO Plat Tebal', category: 'Alat & Perkakas', price: 420000, wholesalePrice: 395000, costPrice: 350000, stock: 15, minStock: 5, unit: 'Unit', code: 'GBK-01', location: 'Area Depan G-01', derivedUnits: [], image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400' },
+      { id: 'p24', name: 'Gerobak ISCO PVC 10kg Roda Hidup', category: 'Alat & Perkakas', price: 550000, wholesalePrice: 510000, costPrice: 460000, stock: 12, minStock: 4, unit: 'Unit', code: 'GBK-02', location: 'Area Depan G-02', derivedUnits: [], image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400' }
     ];
 
     const DEFAULT_CUSTOMERS = [
@@ -119,85 +201,58 @@
     ];
 
     const DEFAULT_EXPENSES = [
-      { id: 'e1', date: '2026-08-17', desc: 'Bensin Truk Operasional Pengiriman Bahan', amount: 150000, category: 'Operasional' },
-      { id: 'e2', date: '2026-08-16', desc: 'Konsumsi Kuli Bongkar Semen 1 DO', amount: 80000, category: 'Tenaga Kerja' }
+      { id: 'e1', date: '2026-08-17', desc: 'Bensin Truk Operasional Pengiriman Bahan', amount: 150000, category: 'Operasional' }
     ];
 
     const CATEGORY_OPTIONS = [
-      'Semen & Pasir',
-      'Paku & Baut',
-      'Kayu & Triplek',
-      'Plafon & Partisi',
-      'Atap & Seng',
-      'Besi & Baja',
-      'Alat & Perkakas',
-      'Cat & Thinner',
-      'Plumbing & Pipa',
-      'Keramik & Granit',
-      'Lain-lain'
+      'Semen & Pasir', 'Paku & Baut', 'Kayu & Triplek', 'Plafon & Partisi', 
+      'Atap & Seng', 'Besi & Baja', 'Alat & Perkakas', 'Cat & Thinner', 
+      'Plumbing & Pipa', 'Keramik & Granit', 'Lain-lain'
     ];
 
-    const UNIT_OPTIONS = [
-      'Sak',
-      'Kg',
-      'Lembar',
-      'Batang',
-      'Rol',
-      'Unit',
-      'Pcs',
-      'Dus',
-      'Meter',
-      'Kaleng',
-      'Koli',
-      'Kubik (m³)'
+    const BASE_UNIT_OPTIONS = [
+      'Sak', 'Kg', 'Lembar', 'Batang', 'Rol', 'Unit', 'Pcs', 'Dus', 'Meter', 'Kaleng', 'Koli', 'Kodi'
     ];
 
     const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
     function App() {
-      // AUTH STATE
-      const [currentUser, setCurrentUser] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_auth_user');
-        return saved ? JSON.parse(saved) : { name: 'Owner / Pemilik', role: 'owner', loggedIn: true };
-      });
-
-      // 10 MENU SIDEBAR
       const [currentTab, setCurrentTab] = useState('inventory');
       const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-      // MASTER DATABASE
+      // MASTER DATA PERSISTENCE
       const [products, setProducts] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_products_v5');
+        const saved = localStorage.getItem('tb_cincinputih_products_v6');
         return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
       });
 
       const [customers, setCustomers] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_customers_v5');
+        const saved = localStorage.getItem('tb_cincinputih_customers_v6');
         return saved ? JSON.parse(saved) : DEFAULT_CUSTOMERS;
       });
 
       const [suppliers, setSuppliers] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_suppliers_v5');
+        const saved = localStorage.getItem('tb_cincinputih_suppliers_v6');
         return saved ? JSON.parse(saved) : DEFAULT_SUPPLIERS;
       });
 
       const [employees, setEmployees] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_employees_v5');
+        const saved = localStorage.getItem('tb_cincinputih_employees_v6');
         return saved ? JSON.parse(saved) : DEFAULT_EMPLOYEES;
       });
 
       const [transactions, setTransactions] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_transactions_v5');
+        const saved = localStorage.getItem('tb_cincinputih_transactions_v6');
         return saved ? JSON.parse(saved) : DEFAULT_TRANSACTIONS;
       });
 
       const [expenses, setExpenses] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_expenses_v5');
+        const saved = localStorage.getItem('tb_cincinputih_expenses_v6');
         return saved ? JSON.parse(saved) : DEFAULT_EXPENSES;
       });
 
       const [profile, setProfile] = useState(() => {
-        const saved = localStorage.getItem('tb_cincinputih_profile_v5');
+        const saved = localStorage.getItem('tb_cincinputih_profile_v6');
         return saved ? JSON.parse(saved) : {
           name: 'TB. CINCIN PUTIH',
           address: 'Jl. Cincin Putih Raya No. 88, Cibitung, Bekasi',
@@ -206,7 +261,7 @@
         };
       });
 
-      // MODAL PRODUK (TAMBAH & EDIT)
+      // MODAL TAMBAH / EDIT PRODUK LENGKAP
       const [isProductModalOpen, setIsProductModalOpen] = useState(false);
       const [editingProduct, setEditingProduct] = useState(null);
       const [productFormData, setProductFormData] = useState({
@@ -220,11 +275,16 @@
         stock: 0,
         minStock: 10,
         location: '',
-        multiUnit: '',
+        derivedUnits: [],
         image: ''
       });
 
-      // KASIR POS
+      // STATE INPUT SATUAN TURUNAN BARU DI DALAM MODAL
+      const [newDerivedName, setNewDerivedName] = useState('');
+      const [newDerivedRatio, setNewDerivedRatio] = useState('');
+      const [newDerivedPrice, setNewDerivedPrice] = useState('');
+
+      // KASIR POS STATE
       const [cart, setCart] = useState([]);
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedCat, setSelectedCat] = useState('Semua');
@@ -234,10 +294,9 @@
       const [discountPercent, setDiscountPercent] = useState(0);
       const [taxPercent, setTaxPercent] = useState(0);
 
-      // CETAK NOTA
+      // CETAK NOTA STATE
       const [printReceipt, setPrintReceipt] = useState(null);
       const [printMode, setPrintMode] = useState('thermal');
-      const [receiptDocType, setReceiptDocType] = useState('pos');
 
       const fileInputRef = useRef(null);
 
@@ -254,15 +313,15 @@
       }, []);
 
       // SYNC LOCALSTORAGE
-      useEffect(() => { localStorage.setItem('tb_cincinputih_products_v5', JSON.stringify(products)); }, [products]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_customers_v5', JSON.stringify(customers)); }, [customers]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_suppliers_v5', JSON.stringify(suppliers)); }, [suppliers]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_employees_v5', JSON.stringify(employees)); }, [employees]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_transactions_v5', JSON.stringify(transactions)); }, [transactions]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_expenses_v5', JSON.stringify(expenses)); }, [expenses]);
-      useEffect(() => { localStorage.setItem('tb_cincinputih_profile_v5', JSON.stringify(profile)); }, [profile]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_products_v6', JSON.stringify(products)); }, [products]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_customers_v6', JSON.stringify(customers)); }, [customers]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_suppliers_v6', JSON.stringify(suppliers)); }, [suppliers]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_employees_v6', JSON.stringify(employees)); }, [employees]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_transactions_v6', JSON.stringify(transactions)); }, [transactions]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_expenses_v6', JSON.stringify(expenses)); }, [expenses]);
+      useEffect(() => { localStorage.setItem('tb_cincinputih_profile_v6', JSON.stringify(profile)); }, [profile]);
 
-      // HANDLER BUKA MODAL TAMBAH PRODUK
+      // BUKA MODAL TAMBAH BARANG
       const handleOpenAddProductModal = () => {
         setEditingProduct(null);
         setProductFormData({
@@ -276,13 +335,16 @@
           stock: '',
           minStock: 10,
           location: 'Gudang Utama A-01',
-          multiUnit: '',
+          derivedUnits: [],
           image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400'
         });
+        setNewDerivedName('');
+        setNewDerivedRatio('');
+        setNewDerivedPrice('');
         setIsProductModalOpen(true);
       };
 
-      // HANDLER BUKA MODAL EDIT PRODUK
+      // BUKA MODAL EDIT BARANG
       const handleOpenEditProductModal = (product) => {
         setEditingProduct(product);
         setProductFormData({
@@ -296,13 +358,56 @@
           stock: product.stock || 0,
           minStock: product.minStock || 10,
           location: product.location || '',
-          multiUnit: product.multiUnit || '',
+          derivedUnits: product.derivedUnits ? [...product.derivedUnits] : [],
           image: product.image || 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400'
         });
+        setNewDerivedName('');
+        setNewDerivedRatio('');
+        setNewDerivedPrice('');
         setIsProductModalOpen(true);
       };
 
-      // HANDLER SIMPAN PRODUK DARI MODAL
+      // TAMBAH SATUAN TURUNAN KE FORM MODAL
+      const handleAddDerivedUnit = () => {
+        if (!newDerivedName.trim()) {
+          alert('Masukkan nama satuan turunan (contoh: Kg, Ons, Meter, Biji)!');
+          return;
+        }
+        if (!newDerivedRatio || Number(newDerivedRatio) <= 0) {
+          alert('Masukkan jumlah konversi yang valid (contoh: 50 untuk 1 Sak = 50 Kg)!');
+          return;
+        }
+        if (!newDerivedPrice || Number(newDerivedPrice) <= 0) {
+          alert('Masukkan harga jual untuk satuan turunan ini!');
+          return;
+        }
+
+        const newUnitItem = {
+          id: 'u-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          name: newDerivedName.trim(),
+          conversionRatio: Number(newDerivedRatio),
+          price: Number(newDerivedPrice)
+        };
+
+        setProductFormData(prev => ({
+          ...prev,
+          derivedUnits: [...prev.derivedUnits, newUnitItem]
+        }));
+
+        setNewDerivedName('');
+        setNewDerivedRatio('');
+        setNewDerivedPrice('');
+      };
+
+      // HAPUS SATUAN TURUNAN DARI FORM MODAL
+      const handleRemoveDerivedUnit = (id) => {
+        setProductFormData(prev => ({
+          ...prev,
+          derivedUnits: prev.derivedUnits.filter(u => u.id !== id)
+        }));
+      };
+
+      // SIMPAN PRODUK DARI MODAL
       const handleSaveProductModal = (e) => {
         e.preventDefault();
         if (!productFormData.name.trim()) {
@@ -322,7 +427,7 @@
           stock: Number(productFormData.stock) || 0,
           minStock: Number(productFormData.minStock) || 5,
           location: productFormData.location.trim() || 'Gudang Utama',
-          multiUnit: productFormData.multiUnit.trim(),
+          derivedUnits: productFormData.derivedUnits,
           image: productFormData.image.trim() || 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400'
         };
 
@@ -338,8 +443,8 @@
       // EXPORT & RESTORE JSON
       const handleExportBackupJson = () => {
         const fullBackup = {
-          app: 'TB. CINCIN PUTIH SYSTEM POS V5',
-          version: '5.0.0',
+          app: 'TB. CINCIN PUTIH SYSTEM POS V6',
+          version: '6.0.0',
           exportedAt: new Date().toISOString(),
           profile,
           products,
@@ -383,50 +488,37 @@
         reader.readAsText(file);
       };
 
-      // KASIR POS LOGIC
-      const addToCart = (product) => {
+      // KASIR POS DENGAN MULTI-SATUAN
+      const addToCartWithUnit = (product, chosenUnitName, chosenPrice, baseDeductionMultiplier = 1) => {
         if (product.stock <= 0) {
           alert(`Stok ${product.name} habis!`);
           return;
         }
+
+        const cartItemId = `${product.id}-${chosenUnitName}`;
         setCart(prev => {
-          const exist = prev.find(item => item.id === product.id);
+          const exist = prev.find(item => item.cartItemId === cartItemId);
           if (exist) {
-            if (exist.qty >= product.stock) {
-              alert('Jumlah beli melebihi stok gudang!');
-              return prev;
-            }
-            return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
+            return prev.map(item => item.cartItemId === cartItemId ? { ...item, qty: item.qty + 1 } : item);
           }
-          return [...prev, { ...product, qty: 1, isWholesale: false, activePrice: product.price }];
+          return [...prev, {
+            ...product,
+            cartItemId,
+            sellingUnit: chosenUnitName,
+            activePrice: chosenPrice,
+            baseDeductionMultiplier,
+            qty: 1,
+            isWholesale: false
+          }];
         });
       };
 
-      const updateQty = (id, newQty) => {
+      const updateQty = (cartItemId, newQty) => {
         if (newQty <= 0) {
-          setCart(prev => prev.filter(item => item.id !== id));
+          setCart(prev => prev.filter(item => item.cartItemId !== cartItemId));
           return;
         }
-        const prod = products.find(p => p.id === id);
-        if (prod && newQty > prod.stock) {
-          alert('Jumlah melebihi stok yang tersedia!');
-          return;
-        }
-        setCart(prev => prev.map(item => item.id === id ? { ...item, qty: newQty } : item));
-      };
-
-      const toggleWholesalePrice = (id) => {
-        setCart(prev => prev.map(item => {
-          if (item.id === id && item.wholesalePrice) {
-            const nextWholesale = !item.isWholesale;
-            return {
-              ...item,
-              isWholesale: nextWholesale,
-              activePrice: nextWholesale ? item.wholesalePrice : item.price
-            };
-          }
-          return item;
-        }));
+        setCart(prev => prev.map(item => item.cartItemId === cartItemId ? { ...item, qty: newQty } : item));
       };
 
       const subtotalCart = useMemo(() => cart.reduce((acc, item) => acc + (item.activePrice * item.qty), 0), [cart]);
@@ -461,9 +553,12 @@
           profit: cart.reduce((sum, it) => sum + ((it.activePrice - it.costPrice) * it.qty), 0) - discountAmount
         };
 
+        // Potong Stok Fisik Sesuai Rasio Satuan
         setProducts(prev => prev.map(prod => {
-          const itemInCart = cart.find(c => c.id === prod.id);
-          return itemInCart ? { ...prod, stock: Math.max(0, prod.stock - itemInCart.qty) } : prod;
+          const itemsOfThisProd = cart.filter(c => c.id === prod.id);
+          if (itemsOfThisProd.length === 0) return prod;
+          const totalDeduction = itemsOfThisProd.reduce((sum, it) => sum + (it.qty * it.baseDeductionMultiplier), 0);
+          return { ...prod, stock: Math.max(0, prod.stock - totalDeduction) };
         }));
 
         if (paymentMethod === 'Tempo / Kasbon (Hutang)') {
@@ -472,8 +567,6 @@
 
         setTransactions(prev => [newTx, ...prev]);
         setPrintReceipt(newTx);
-        setReceiptDocType('pos');
-        setPrintMode('thermal');
         setCart([]);
         setCashInput('');
         setDiscountPercent(0);
@@ -492,7 +585,7 @@
       const MENU_ITEMS = [
         { id: 'dashboard', label: 'Dashboard Keuangan', icon: 'fa-chart-pie', badge: null },
         { id: 'pos', label: 'Kasir POS Penjualan (F2)', icon: 'fa-cash-register', badge: 'F2' },
-        { id: 'inventory', label: 'Inventaris & Kartu Stok', icon: 'fa-boxes-stacked', badge: products.length },
+        { id: 'inventory', label: 'Inventaris & Multi-Satuan', icon: 'fa-boxes-stacked', badge: products.length },
         { id: 'restock', label: 'Stok Masuk & PO Supplier', icon: 'fa-truck-ramp-box', badge: null },
         { id: 'debts', label: 'Buku Piutang (Kasbon)', icon: 'fa-hand-holding-dollar', badge: customers.filter(c => c.debt > 0).length },
         { id: 'payables', label: 'Buku Utang Supplier', icon: 'fa-file-invoice-dollar', badge: suppliers.filter(s => s.payable > 0).length },
@@ -516,7 +609,7 @@
                   <div className="overflow-hidden">
                     <h1 className="text-sm font-black tracking-tight text-slate-100 truncate">{profile.name}</h1>
                     <span className="inline-block px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      OFFLINE & ONLINE
+                      MULTI-SATUAN AKTIF
                     </span>
                   </div>
                 </div>
@@ -595,20 +688,19 @@
               {currentTab === 'dashboard' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
                   <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-chart-pie text-emerald-400"></i>
-                    Dashboard Keuangan Toko
+                    <i className="fa-solid fa-chart-pie text-emerald-400"></i> Dashboard Toko & Keuangan
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md">
-                      <span className="text-xs text-slate-400">Omzet Kasir:</span>
+                      <span className="text-xs text-slate-400">Omzet Penjualan:</span>
                       <h3 className="text-xl font-black text-emerald-400 mt-1">{formatRupiah(transactions.reduce((acc, t) => acc + t.total, 0))}</h3>
                     </div>
                     <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md">
-                      <span className="text-xs text-slate-400">Piutang Mandor (Kasbon):</span>
+                      <span className="text-xs text-slate-400">Piutang Kasbon Mandor:</span>
                       <h3 className="text-xl font-black text-amber-400 mt-1">{formatRupiah(customers.reduce((acc, c) => acc + c.debt, 0))}</h3>
                     </div>
                     <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md">
-                      <span className="text-xs text-slate-400">Hutang ke Pabrik:</span>
+                      <span className="text-xs text-slate-400">Hutang Pabrik / Supplier:</span>
                       <h3 className="text-xl font-black text-rose-400 mt-1">{formatRupiah(suppliers.reduce((acc, s) => acc + s.payable, 0))}</h3>
                     </div>
                     <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md">
@@ -621,7 +713,7 @@
                 </div>
               )}
 
-              {/* KASIR POS */}
+              {/* KASIR POS DENGAN MULTI-SATUAN */}
               {currentTab === 'pos' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                   <div className="lg:col-span-7 xl:col-span-8 space-y-3">
@@ -630,7 +722,7 @@
                         <i className="fa-solid fa-search absolute left-3.5 top-3 text-slate-500 text-xs"></i>
                         <input 
                           type="text" 
-                          placeholder="Cari semen, paku, seng, triplek, kawat..."
+                          placeholder="Cari material..."
                           value={searchQuery}
                           onChange={e => setSearchQuery(e.target.value)}
                           className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs sm:text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
@@ -649,47 +741,56 @@
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[calc(100vh-170px)] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[calc(100vh-170px)] overflow-y-auto pr-1">
                       {filteredProducts.map(prod => (
                         <div 
                           key={prod.id}
-                          onClick={() => addToCart(prod)}
-                          className="bg-slate-900 border border-slate-800 hover:border-emerald-500/60 rounded-xl p-2.5 flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.02] active:scale-95 group shadow-sm"
+                          className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col justify-between shadow-sm space-y-2"
                         >
                           <div>
-                            <div className="w-full h-24 rounded-lg bg-slate-950 overflow-hidden mb-2 relative">
-                              <img src={prod.image} alt={prod.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                              <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-950/80 text-emerald-400 border border-slate-800">
+                            <div className="flex justify-between items-start">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-950 text-emerald-400 border border-slate-800 font-mono">
                                 {prod.code}
                               </span>
-                              <span className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold ${prod.stock > (prod.minStock || 10) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
+                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${prod.stock > (prod.minStock || 10) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
                                 Stok: {prod.stock} {prod.unit}
                               </span>
                             </div>
-                            <h3 className="font-bold text-xs sm:text-sm text-slate-100 line-clamp-2 leading-snug">{prod.name}</h3>
-                            <div className="flex justify-between items-center text-[10px] text-slate-400 mt-1">
-                              <span>{prod.category}</span>
-                              <span className="text-slate-500">{prod.location}</span>
-                            </div>
+                            <h3 className="font-bold text-xs sm:text-sm text-slate-100 mt-1.5 leading-snug">{prod.name}</h3>
+                            <span className="text-[10px] text-slate-400 block">{prod.category} • {prod.location}</span>
                           </div>
 
-                          <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
-                            <div>
-                              <div className="text-xs sm:text-sm font-extrabold text-emerald-400">{formatRupiah(prod.price)}</div>
-                              {prod.wholesalePrice && (
-                                <div className="text-[10px] text-teal-400 font-medium">Partai: {formatRupiah(prod.wholesalePrice)}</div>
-                              )}
-                            </div>
-                            <button className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-sm border border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-slate-950 transition-colors">
-                              +
+                          {/* Tombol Pilihan Satuan Utama vs Satuan Turunan */}
+                          <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                            <div className="text-[10px] text-slate-400 font-semibold">Pilih Satuan Jual:</div>
+                            
+                            {/* Satuan Utama */}
+                            <button
+                              onClick={() => addToCartWithUnit(prod, prod.unit, prod.price, 1)}
+                              className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 border border-emerald-500/30 flex items-center justify-between text-xs font-bold transition-all"
+                            >
+                              <span>1 {prod.unit} (Utama)</span>
+                              <span>{formatRupiah(prod.price)}</span>
                             </button>
+
+                            {/* Daftar Satuan Turunan (Jika Ada) */}
+                            {prod.derivedUnits && prod.derivedUnits.map(du => (
+                              <button
+                                key={du.id}
+                                onClick={() => addToCartWithUnit(prod, du.name, du.price, 1 / du.conversionRatio)}
+                                className="w-full py-1.5 px-2.5 rounded-lg bg-slate-950 hover:bg-teal-500 hover:text-slate-950 text-teal-400 border border-slate-800 flex items-center justify-between text-xs font-bold transition-all"
+                              >
+                                <span>1 {du.name} (Eceran)</span>
+                                <span>{formatRupiah(du.price)}</span>
+                              </button>
+                            ))}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Keranjang */}
+                  {/* Keranjang Kasir */}
                   <div className="lg:col-span-5 xl:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between h-[calc(100vh-120px)] sticky top-4 shadow-xl">
                     <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
@@ -737,16 +838,16 @@
                         {cart.length === 0 ? (
                           <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs text-center p-4">
                             <i className="fa-solid fa-cart-shopping text-3xl mb-2 text-slate-600"></i>
-                            Keranjang kosong.
+                            Keranjang kosong.<br />Pilih satuan jual barang untuk menambahkan ke nota.
                           </div>
                         ) : (
                           cart.map(item => (
-                            <div key={item.id} className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                            <div key={item.cartItemId} className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
                               <div className="flex justify-between items-start">
                                 <div>
                                   <div className="text-xs font-bold text-slate-200">{item.name}</div>
                                   <div className="text-[10px] text-emerald-400 font-semibold">
-                                    {formatRupiah(item.activePrice)} / {item.unit}
+                                    {formatRupiah(item.activePrice)} / <span className="underline">{item.sellingUnit}</span>
                                   </div>
                                 </div>
                                 <div className="text-xs font-extrabold text-slate-100">
@@ -755,19 +856,11 @@
                               </div>
 
                               <div className="flex items-center justify-between pt-1 border-t border-slate-900">
-                                {item.wholesalePrice ? (
-                                  <button
-                                    onClick={() => toggleWholesalePrice(item.id)}
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors ${item.isWholesale ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-900 text-slate-400 border-slate-800'}`}
-                                  >
-                                    {item.isWholesale ? '✓ Harga Partai' : 'Harga Eceran'}
-                                  </button>
-                                ) : <span />}
-
+                                <span className="text-[10px] text-slate-400">Satuan: <strong>{item.sellingUnit}</strong></span>
                                 <div className="flex items-center gap-1.5">
-                                  <button onClick={() => updateQty(item.id, item.qty - 1)} className="w-6 h-6 rounded bg-slate-800 text-slate-200 font-bold text-xs flex items-center justify-center hover:bg-slate-700">-</button>
+                                  <button onClick={() => updateQty(item.cartItemId, item.qty - 1)} className="w-6 h-6 rounded bg-slate-800 text-slate-200 font-bold text-xs flex items-center justify-center hover:bg-slate-700">-</button>
                                   <span className="w-8 text-center text-xs font-bold">{item.qty}</span>
-                                  <button onClick={() => updateQty(item.id, item.qty + 1)} className="w-6 h-6 rounded bg-slate-800 text-slate-200 font-bold text-xs flex items-center justify-center hover:bg-slate-700">+</button>
+                                  <button onClick={() => updateQty(item.cartItemId, item.qty + 1)} className="w-6 h-6 rounded bg-slate-800 text-slate-200 font-bold text-xs flex items-center justify-center hover:bg-slate-700">+</button>
                                 </div>
                               </div>
                             </div>
@@ -813,7 +906,7 @@
               )}
 
               {/* ==================================================== */}
-              {/* 3. INVENTARIS DENGAN MODAL FORM PROFESIONAL          */}
+              {/* INVENTARIS DENGAN TABEL MULTI-SATUAN                */}
               {/* ==================================================== */}
               {currentTab === 'inventory' && (
                 <div className="space-y-4 max-w-6xl mx-auto">
@@ -821,15 +914,15 @@
                     <div>
                       <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
                         <i className="fa-solid fa-boxes-stacked text-emerald-400"></i>
-                        Inventaris & Kartu Stok Material ({products.length} Item)
+                        Inventaris & Konfigurasi Multi-Satuan ({products.length} Item)
                       </h2>
-                      <p className="text-xs text-slate-400">Kelola SKU, HPP modal, harga eceran/partai, rak gudang, dan multi-satuan.</p>
+                      <p className="text-xs text-slate-400">Atur SKU, HPP modal, harga retail/grosir, serta satuan turunan eceran (Kg, Ons, Meter, dll).</p>
                     </div>
                     <button 
                       onClick={handleOpenAddProductModal}
                       className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
                     >
-                      <i className="fa-solid fa-plus"></i> Tambah Produk Material Baru
+                      <i className="fa-solid fa-plus"></i> Tambah Material Baru
                     </button>
                   </div>
 
@@ -839,11 +932,9 @@
                         <tr>
                           <th className="p-3">Kode SKU</th>
                           <th className="p-3">Nama Produk Material</th>
-                          <th className="p-3">Kategori</th>
-                          <th className="p-3">Lokasi Rak</th>
-                          <th className="p-3 text-right">Harga HPP</th>
-                          <th className="p-3 text-right">Harga Retail</th>
-                          <th className="p-3 text-right">Harga Grosir</th>
+                          <th className="p-3">Kategori & Lokasi</th>
+                          <th className="p-3 text-right">Harga Satuan Utama</th>
+                          <th className="p-3">Satuan Turunan (Eceran)</th>
                           <th className="p-3 text-center">Sisa Stok</th>
                           <th className="p-3 text-center">Aksi</th>
                         </tr>
@@ -854,17 +945,31 @@
                             <td className="p-3 font-mono text-emerald-400 font-bold">{item.code}</td>
                             <td className="p-3">
                               <div className="font-bold text-slate-100">{item.name}</div>
-                              {item.multiUnit && (
-                                <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                  <i className="fa-solid fa-layer-group text-[9px] text-emerald-500"></i> {item.multiUnit}
+                              <div className="text-[10px] text-slate-400">HPP: {formatRupiah(item.costPrice)} • Grosir: {formatRupiah(item.wholesalePrice)}</div>
+                            </td>
+                            <td className="p-3">
+                              <div className="text-slate-300">{item.category}</div>
+                              <div className="text-[10px] text-slate-500 font-mono">{item.location || '-'}</div>
+                            </td>
+                            <td className="p-3 text-right">
+                              <div className="font-bold text-emerald-400">{formatRupiah(item.price)}</div>
+                              <div className="text-[10px] text-slate-400">per {item.unit}</div>
+                            </td>
+                            <td className="p-3">
+                              {item.derivedUnits && item.derivedUnits.length > 0 ? (
+                                <div className="space-y-1">
+                                  {item.derivedUnits.map(du => (
+                                    <div key={du.id} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[10px] text-teal-300 mr-1.5">
+                                      <i className="fa-solid fa-link text-[9px] text-teal-500"></i>
+                                      <span>1 {item.unit} = {du.conversionRatio} {du.name}</span>
+                                      <strong className="text-slate-100">({formatRupiah(du.price)})</strong>
+                                    </div>
+                                  ))}
                                 </div>
+                              ) : (
+                                <span className="text-slate-500 text-[11px]">- Belum ada konversi -</span>
                               )}
                             </td>
-                            <td className="p-3 text-slate-400">{item.category}</td>
-                            <td className="p-3 text-slate-400 font-mono text-[11px]">{item.location || '-'}</td>
-                            <td className="p-3 text-right text-slate-400">{formatRupiah(item.costPrice)}</td>
-                            <td className="p-3 text-right font-bold text-emerald-400">{formatRupiah(item.price)} / {item.unit}</td>
-                            <td className="p-3 text-right text-teal-400 font-semibold">{item.wholesalePrice ? formatRupiah(item.wholesalePrice) : '-'}</td>
                             <td className="p-3 text-center">
                               <span className={`px-2 py-1 rounded text-xs font-bold ${item.stock > (item.minStock || 10) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`}>
                                 {item.stock} {item.unit}
@@ -898,7 +1003,7 @@
                 </div>
               )}
 
-              {/* RESTOCK, DEBTS, PAYABLES, EXPENSES, FINANCE, EMPLOYEES, SETTINGS TETAP LENGKAP */}
+              {/* TAB LAINNYA */}
               {currentTab === 'restock' && (
                 <div className="space-y-4 max-w-5xl mx-auto">
                   <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
@@ -946,7 +1051,7 @@
                         <div>
                           <div className="flex justify-between items-center">
                             <h3 className="font-bold text-sm text-slate-100">{cust.name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${cust.debt > 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${cust.debt > 0 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
                               {cust.debt > 0 ? 'Ada Bon' : 'Lunas'}
                             </span>
                           </div>
@@ -979,7 +1084,7 @@
               {currentTab === 'payables' && (
                 <div className="space-y-4 max-w-5xl mx-auto">
                   <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i className="fa-solid fa-file-invoice-dollar text-emerald-400"></i> Buku Tagihan & Hutang Pabrik
+                    <i className="fa-solid fa-file-invoice-dollar text-emerald-400"></i> Buku Tagihan Pabrik
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {suppliers.map(s => (
@@ -1064,7 +1169,7 @@
                 <div className="space-y-4 max-w-4xl mx-auto">
                   <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                     <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                      <i className="fa-solid fa-store text-emerald-400"></i> Profil Toko
+                      <i className="fa-solid fa-store text-emerald-400"></i> Profil Toko & Footer
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
@@ -1083,11 +1188,11 @@
           </div>
 
           {/* ======================================================== */}
-          {/* 🌟 MODAL FORM POP-UP TAMBAH / EDIT PRODUK PROFESIONAL     */}
+          {/* 🌟 MODAL FORM DENGAN INPUT MULTI-SATUAN LENGKAP          */}
           {/* ======================================================== */}
           {isProductModalOpen && (
             <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-              <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 max-w-2xl w-full shadow-2xl space-y-5 my-auto max-h-[95vh] overflow-y-auto">
+              <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 max-w-3xl w-full shadow-2xl space-y-5 my-auto max-h-[95vh] overflow-y-auto">
                 
                 {/* Header Modal */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-800">
@@ -1097,9 +1202,9 @@
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-slate-100">
-                        {editingProduct ? 'Edit Spesifikasi Produk Material' : 'Tambah Produk Material Baru'}
+                        {editingProduct ? 'Edit Spesifikasi & Multi-Satuan Barang' : 'Tambah Material Baru & Konfigurasi Multi-Satuan'}
                       </h3>
-                      <p className="text-xs text-slate-400">Lengkapi data master barang, harga modal, dan konfigurasi konversi eceran.</p>
+                      <p className="text-xs text-slate-400">Atur SKU, harga HPP/retail, serta satuan turunan eceran (Kg, Ons, Meter, Dus).</p>
                     </div>
                   </div>
                   <button
@@ -1110,7 +1215,7 @@
                   </button>
                 </div>
 
-                {/* Form Input Lengkap */}
+                {/* Form Input */}
                 <form onSubmit={handleSaveProductModal} className="space-y-4">
                   
                   {/* Baris 1: Kode SKU & Kategori */}
@@ -1122,7 +1227,7 @@
                       <input 
                         type="text"
                         required
-                        placeholder="Contoh: SMN-01, PKU-02"
+                        placeholder="Contoh: SMN-01"
                         value={productFormData.code}
                         onChange={e => setProductFormData({ ...productFormData, code: e.target.value })}
                         className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-emerald-400 font-bold uppercase focus:outline-none"
@@ -1146,12 +1251,12 @@
                   <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                     <div className="sm:col-span-8">
                       <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Nama Lengkap Produk Material <span className="text-emerald-400">*</span>
+                        Nama Lengkap Material <span className="text-emerald-400">*</span>
                       </label>
                       <input 
                         type="text"
                         required
-                        placeholder="Contoh: Semen Tiga Roda 50kg, Triplek 12mm 122x244"
+                        placeholder="Contoh: Semen Tiga Roda 50kg"
                         value={productFormData.name}
                         onChange={e => setProductFormData({ ...productFormData, name: e.target.value })}
                         className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 font-bold focus:outline-none"
@@ -1159,74 +1264,171 @@
                     </div>
                     <div className="sm:col-span-4">
                       <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Satuan Utama <span className="text-emerald-400">*</span>
+                        Satuan Utama (Base Unit) <span className="text-emerald-400">*</span>
                       </label>
                       <select 
                         value={productFormData.unit}
                         onChange={e => setProductFormData({ ...productFormData, unit: e.target.value })}
                         className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 font-bold focus:outline-none"
                       >
-                        {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                        {BASE_UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
                       </select>
                     </div>
                   </div>
 
-                  {/* Baris 3: Harga HPP, Harga Retail & Harga Grosir */}
+                  {/* Baris 3: Harga HPP, Retail & Grosir Satuan Utama */}
                   <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800/80 space-y-2.5">
                     <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <i className="fa-solid fa-coins text-amber-400"></i> Penetapan Harga Jual & Margin Keuntungan
+                      <i className="fa-solid fa-coins text-amber-400"></i> Harga Jual Satuan Utama ({productFormData.unit})
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="text-[11px] text-slate-400 block mb-1">Harga Beli Modal (HPP)</label>
-                        <div className="relative">
-                          <span className="absolute left-2.5 top-2 text-[11px] text-slate-500 font-bold">Rp</span>
-                          <input 
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={productFormData.costPrice}
-                            onChange={e => setProductFormData({ ...productFormData, costPrice: e.target.value })}
-                            className="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-100 font-semibold focus:outline-none"
-                          />
-                        </div>
+                        <input 
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={productFormData.costPrice}
+                          onChange={e => setProductFormData({ ...productFormData, costPrice: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 font-semibold focus:outline-none"
+                        />
                       </div>
                       <div>
-                        <label className="text-[11px] text-emerald-400 font-semibold block mb-1">Harga Jual Retail (Eceran)</label>
-                        <div className="relative">
-                          <span className="absolute left-2.5 top-2 text-[11px] text-emerald-500 font-bold">Rp</span>
-                          <input 
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={productFormData.price}
-                            onChange={e => setProductFormData({ ...productFormData, price: e.target.value })}
-                            className="w-full bg-slate-900 border border-emerald-500/50 focus:border-emerald-400 rounded-xl pl-8 pr-3 py-2 text-xs text-emerald-400 font-bold focus:outline-none"
-                          />
-                        </div>
+                        <label className="text-[11px] text-emerald-400 font-semibold block mb-1">Harga Jual Retail ({productFormData.unit})</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={productFormData.price}
+                          onChange={e => setProductFormData({ ...productFormData, price: e.target.value })}
+                          className="w-full bg-slate-900 border border-emerald-500/50 focus:border-emerald-400 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold focus:outline-none"
+                        />
                       </div>
                       <div>
-                        <label className="text-[11px] text-teal-400 font-semibold block mb-1">Harga Grosir (Partai/Proyek)</label>
-                        <div className="relative">
-                          <span className="absolute left-2.5 top-2 text-[11px] text-teal-500 font-bold">Rp</span>
-                          <input 
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={productFormData.wholesalePrice}
-                            onChange={e => setProductFormData({ ...productFormData, wholesalePrice: e.target.value })}
-                            className="w-full bg-slate-900 border border-slate-800 focus:border-teal-400 rounded-xl pl-8 pr-3 py-2 text-xs text-teal-400 font-bold focus:outline-none"
-                          />
-                        </div>
+                        <label className="text-[11px] text-teal-400 font-semibold block mb-1">Harga Grosir ({productFormData.unit})</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={productFormData.wholesalePrice}
+                          onChange={e => setProductFormData({ ...productFormData, wholesalePrice: e.target.value })}
+                          className="w-full bg-slate-900 border border-slate-800 focus:border-teal-400 rounded-xl px-3 py-2 text-xs text-teal-400 font-bold focus:outline-none"
+                        />
                       </div>
                     </div>
                   </div>
 
-                  {/* Baris 4: Stok Saat Ini, Min Alert & Lokasi Rak */}
+                  {/* ==================================================== */}
+                  {/* 🔗 BAGIAN DINAMIS: KONFIGURASI SATUAN TURUNAN       */}
+                  {/* ==================================================== */}
+                  <div className="p-4 rounded-2xl bg-slate-950 border border-teal-500/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <i className="fa-solid fa-layer-group text-teal-400"></i>
+                        <span className="text-xs font-bold text-slate-100">Konfigurasi Satuan Turunan / Eceran</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400">
+                        Base: <strong>1 {productFormData.unit}</strong>
+                      </span>
+                    </div>
+
+                    {/* Input Field Tambah Satuan Turunan Baru */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-900/90 p-3 rounded-xl border border-slate-800 items-end">
+                      <div className="sm:col-span-4">
+                        <label className="text-[10px] font-semibold text-slate-300 block mb-1">Nama Satuan Turunan</label>
+                        <input 
+                          type="text"
+                          placeholder="Contoh: Kg, Ons, Meter"
+                          value={newDerivedName}
+                          onChange={e => setNewDerivedName(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-teal-400 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none"
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <label className="text-[10px] font-semibold text-slate-300 block mb-1">Konversi per 1 {productFormData.unit}</label>
+                        <input 
+                          type="number"
+                          step="any"
+                          min="0.001"
+                          placeholder="Contoh: 50"
+                          value={newDerivedRatio}
+                          onChange={e => setNewDerivedRatio(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-teal-400 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 font-mono text-center focus:outline-none"
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <label className="text-[10px] font-semibold text-teal-400 block mb-1">Harga Jual Turunan (Rp)</label>
+                        <input 
+                          type="number"
+                          min="0"
+                          placeholder="Contoh: 2500"
+                          value={newDerivedPrice}
+                          onChange={e => setNewDerivedPrice(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-teal-400 rounded-lg px-2.5 py-1.5 text-xs text-teal-300 font-bold focus:outline-none"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <button
+                          type="button"
+                          onClick={handleAddDerivedUnit}
+                          className="w-full py-1.5 px-3 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <i className="fa-solid fa-plus text-[10px]"></i> Tambah
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Tabel List Satuan Turunan Tersimpan */}
+                    {productFormData.derivedUnits.length > 0 ? (
+                      <div className="overflow-x-auto rounded-xl border border-slate-800">
+                        <table className="w-full text-left text-xs text-slate-200">
+                          <thead className="bg-slate-900 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                            <tr>
+                              <th className="p-2.5">Satuan Turunan</th>
+                              <th className="p-2.5 text-center">Rasio Konversi</th>
+                              <th className="p-2.5 text-right">Harga Jual Eceran</th>
+                              <th className="p-2.5 text-center">Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/60 bg-slate-950">
+                            {productFormData.derivedUnits.map(unitItem => (
+                              <tr key={unitItem.id} className="hover:bg-slate-900/50">
+                                <td className="p-2.5 font-bold text-teal-300 flex items-center gap-1.5">
+                                  <i className="fa-solid fa-arrow-right text-[10px] text-teal-500"></i>
+                                  {unitItem.name}
+                                </td>
+                                <td className="p-2.5 text-center font-mono text-slate-300">
+                                  1 {productFormData.unit} = <strong>{unitItem.conversionRatio}</strong> {unitItem.name}
+                                </td>
+                                <td className="p-2.5 text-right font-extrabold text-emerald-400">
+                                  {formatRupiah(unitItem.price)} / {unitItem.name}
+                                </td>
+                                <td className="p-2.5 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveDerivedUnit(unitItem.id)}
+                                    className="px-2 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-bold"
+                                  >
+                                    <i className="fa-solid fa-trash mr-1"></i> Hapus
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-2.5 text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                        Belum ada satuan turunan yang ditambahkan untuk barang ini.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Baris 4: Stok Fisik & Lokasi Rak */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Stok Fisik Saat Ini <span className="text-emerald-400">*</span>
+                        Stok Fisik ({productFormData.unit}) <span className="text-emerald-400">*</span>
                       </label>
                       <input 
                         type="number"
@@ -1239,9 +1441,7 @@
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Peringatan Stok Minimum
-                      </label>
+                      <label className="text-xs font-semibold text-slate-300 block mb-1">Peringatan Min. Stok</label>
                       <input 
                         type="number"
                         min="0"
@@ -1252,12 +1452,10 @@
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-slate-300 block mb-1">
-                        Lokasi Rak / Gudang
-                      </label>
+                      <label className="text-xs font-semibold text-slate-300 block mb-1">Lokasi Rak / Gudang</label>
                       <input 
                         type="text"
-                        placeholder="Contoh: Rak B-02, Gudang A"
+                        placeholder="Contoh: Rak Besi B-02"
                         value={productFormData.location}
                         onChange={e => setProductFormData({ ...productFormData, location: e.target.value })}
                         className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none"
@@ -1265,29 +1463,14 @@
                     </div>
                   </div>
 
-                  {/* Baris 5: Konfigurasi Multi-Satuan / Konversi Eceran */}
-                  <div>
-                    <label className="text-xs font-semibold text-slate-300 block mb-1">
-                      Konfigurasi Multi-Satuan / Konversi Eceran
-                    </label>
-                    <input 
-                      type="text"
-                      placeholder="Contoh: 1 Sak = 50 Kg, 1 Dus = 25 Kg, 1 Rol = 50 Meter, 1 Kg = 10 Ons"
-                      value={productFormData.multiUnit}
-                      onChange={e => setProductFormData({ ...productFormData, multiUnit: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none font-mono"
-                    />
-                    <span className="text-[10px] text-slate-500 mt-0.5 block">Membantu kasir saat melayani penjualan eceran per kilogram, ons, atau meter.</span>
-                  </div>
-
-                  {/* Tombol Aksi Simpan */}
+                  {/* Tombol Aksi */}
                   <div className="flex gap-2.5 pt-3 border-t border-slate-800">
                     <button
                       type="submit"
                       className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
                     >
                       <i className="fa-solid fa-floppy-disk"></i>
-                      {editingProduct ? 'Simpan Perubahan Produk' : 'Tambah Produk ke Database'}
+                      {editingProduct ? 'Simpan Perubahan Material' : 'Simpan Material Baru ke Database'}
                     </button>
                     <button
                       type="button"
@@ -1336,7 +1519,7 @@
                       <div key={i} className="flex justify-between text-[11px]">
                         <div>
                           <div className="font-bold">{item.name}</div>
-                          <div className="text-[10px] text-slate-600">{item.qty} {item.unit} x {formatRupiah(item.activePrice)}</div>
+                          <div className="text-[10px] text-slate-600">{item.qty} {item.sellingUnit} x {formatRupiah(item.activePrice)}</div>
                         </div>
                         <span className="font-bold">{formatRupiah(item.activePrice * item.qty)}</span>
                       </div>
