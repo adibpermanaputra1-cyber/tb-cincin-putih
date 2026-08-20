@@ -10,17 +10,19 @@ import {
   User,
   SaleTransaction,
   StockMovement,
+  StoreCapitalTransaction,
+  StoreShift,
 } from '../types';
 
 export const INITIAL_CLIENT_SETTINGS: StoreSettings = {
-  storeName: 'TB. Cincin Putih',
+  storeName: 'TB.CINCIN PUTIH',
   tagline: 'Penyedia Bahan Bangunan & Alat Konstruksi Terpercaya',
-  ownerName: 'Pak Ahmad & Buk Maesaroh',
-  address: 'Jl. Raya Bangunan Utama No. 88, TB. Cincin Putih, Bekasi',
+  ownerName: 'Ahmad Junaidi',
+  address: 'Jl. Raya Wajok Hulu KM. 11,5 (Depan Nawa Perkasa)',
   phone: '0812-3456-7890 / (021) 8901234',
   email: 'cincinputih.tb@gmail.com',
   npwp: '09.876.543.2-412.000',
-  footerNote: 'Barang yang sudah dibeli dapat ditukar jika cacat maksimal 3 hari kerja dengan menyertakan nota resmi ini. Terima kasih telah berbelanja di TB. Cincin Putih!',
+  footerNote: 'Barang yang sudah dibeli dapat ditukar jika cacat maksimal 3 hari kerja dengan menyertakan nota resmi ini. Terima kasih telah berbelanja di TB. CINCIN PUTIH!',
   bankAccount: 'BCA 8801-2345-678 a.n TB. Cincin Putih',
   qrisInstruction: 'Scan QRIS melalui aplikasi mobile banking (BCA, Mandiri, BRI, BNI) atau E-Wallet (GoPay, OVO, Dana, ShopeePay).',
   bankAccounts: [
@@ -46,8 +48,9 @@ export const INITIAL_CLIENT_SETTINGS: StoreSettings = {
 export const INITIAL_CLIENT_USERS: User[] = [
   {
     id: 'usr_owner_01',
-    name: 'Pak Ahmad & Buk Maesaroh (Owner)',
+    name: 'Ahmad Junaidi',
     email: 'owner@toko.com',
+    username: 'owner',
     role: 'OWNER',
     phone: '0812-3456-7890',
     createdAt: '2026-01-01T08:00:00.000Z',
@@ -796,6 +799,59 @@ export const INITIAL_CLIENT_STOCK_MOVEMENTS: StockMovement[] = [
     unitName: 'Kg',
     referenceNo: 'INV-202608-0001',
     notes: 'Penjualan Kasir POS Mandor Rahmat',
-    createdBy: 'Pak Ahmad & Buk Maesaroh (Owner)',
+    createdBy: 'Ahmad Junaidi',
   },
 ];
+
+export const INITIAL_CLIENT_CAPITAL_TRANSACTIONS: StoreCapitalTransaction[] = [
+  {
+    id: 'cap_01',
+    type: 'TANAM_MODAL',
+    amount: 3500000,
+    date: '2026-08-16T08:00:00.000Z',
+    notes: 'Setoran modal kas awal toko & operasional',
+    paymentMethod: 'TUNAI',
+    recordedBy: 'Ahmad Junaidi',
+    runningBalance: 3500000,
+  },
+  {
+    id: 'cap_02',
+    type: 'TANAM_MODAL',
+    amount: 500000,
+    date: '2026-08-18T10:00:00.000Z',
+    notes: 'Tambah modal kasir uang kembalian',
+    paymentMethod: 'TUNAI',
+    recordedBy: 'Ahmad Junaidi',
+    runningBalance: 4000000,
+  },
+  {
+    id: 'cap_03',
+    type: 'TARIK_MODAL',
+    amount: 250499,
+    date: '2026-08-18T16:30:00.000Z',
+    notes: 'Prive penarikan keuntungan pemilik',
+    paymentMethod: 'TRANSFER',
+    recordedBy: 'Ahmad Junaidi',
+    runningBalance: 3749501,
+  },
+];
+
+export const INITIAL_CLIENT_SHIFTS: StoreShift[] = [
+  {
+    id: 'shift_active_01',
+    shiftNumber: 1,
+    cashierId: 'usr_owner_01',
+    cashierName: 'Ahmad Junaidi',
+    startTime: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
+    status: 'OPEN',
+    startingCash: 500000,
+    expectedCash: 600000,
+    cashSalesAmount: 100000,
+    nonCashSalesAmount: 0,
+    totalSalesAmount: 100000,
+    totalTransactionsCount: 2,
+    cashExpensesAmount: 0,
+    openNotes: 'Buka kasir pagi toko material',
+  },
+];
+

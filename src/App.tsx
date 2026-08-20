@@ -289,6 +289,7 @@ export default function App() {
               currentUser={currentUser}
               onNavigate={setActiveTab}
               products={products}
+              onRefresh={refreshAllData}
             />
           )}
 

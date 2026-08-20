@@ -481,6 +481,85 @@ export const api = {
     }
   },
 
+  // Capital & Store Balance (Saldo Toko, Tanam & Tarik Modal)
+  getCapitalTransactions: async () => {
+    try {
+      return await fetchJSON<any[]>('/api/capital');
+    } catch {
+      return localStore.getCapitalTransactions();
+    }
+  },
+  createCapitalTransaction: async (data: any) => {
+    try {
+      return await fetchJSON<any>('/api/capital', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return localStore.createCapitalTransaction(data);
+    }
+  },
+  deleteCapitalTransaction: async (id: string) => {
+    try {
+      return await fetchJSON<{ message: string }>(`/api/capital/${id}`, {
+        method: 'DELETE',
+      });
+    } catch {
+      return localStore.deleteCapitalTransaction(id);
+    }
+  },
+  getStoreBalance: async () => {
+    try {
+      const res = await fetchJSON<{ balance: number }>('/api/capital/balance');
+      return res.balance;
+    } catch {
+      return localStore.getStoreBalance();
+    }
+  },
+  getStoreBalanceMovements: async () => {
+    try {
+      return await fetchJSON<any[]>('/api/capital/movements');
+    } catch {
+      return localStore.getStoreBalanceMovements();
+    }
+  },
+
+  // Shifts (Buka & Tutup Kasir)
+  getShifts: async () => {
+    try {
+      return await fetchJSON<any[]>('/api/shifts');
+    } catch {
+      return localStore.getShifts();
+    }
+  },
+  getActiveShift: async () => {
+    try {
+      return await fetchJSON<any>('/api/shifts/active');
+    } catch {
+      return localStore.getActiveShift();
+    }
+  },
+  openShift: async (data: { startingCash: number; cashierName: string; cashierId: string; notes?: string }) => {
+    try {
+      return await fetchJSON<any>('/api/shifts/open', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return localStore.openShift(data);
+    }
+  },
+  closeShift: async (data: { shiftId: string; actualCash: number; notes?: string; closedBy: string }) => {
+    try {
+      return await fetchJSON<any>('/api/shifts/close', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return localStore.closeShift(data);
+    }
+  },
+
   // System (Backup, Restore & Reset)
   getBackup: async () => {
     try {

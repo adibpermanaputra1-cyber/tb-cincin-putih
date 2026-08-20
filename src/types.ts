@@ -277,6 +277,40 @@ export interface StoreSettings {
   qrisImageUrl?: string;
 }
 
+export interface StoreCapitalTransaction {
+  id: string;
+  type: 'TANAM_MODAL' | 'TARIK_MODAL';
+  amount: number;
+  date: string;
+  notes: string;
+  paymentMethod: 'TUNAI' | 'TRANSFER';
+  recordedBy: string;
+  runningBalance?: number;
+  source?: string;
+}
+
+export interface StoreShift {
+  id: string;
+  shiftNumber?: number;
+  cashierId: string;
+  cashierName: string;
+  startTime: string;
+  endTime?: string;
+  status: 'OPEN' | 'CLOSED';
+  startingCash: number;
+  expectedCash?: number;
+  actualCash?: number;
+  difference?: number;
+  cashSalesAmount?: number;
+  nonCashSalesAmount?: number;
+  totalSalesAmount?: number;
+  totalTransactionsCount?: number;
+  cashExpensesAmount?: number;
+  openNotes?: string;
+  closeNotes?: string;
+  closedBy?: string;
+}
+
 export interface DashboardOverview {
   todaySales: number;
   monthSales: number;
@@ -286,7 +320,15 @@ export interface DashboardOverview {
   totalPayables: number;
   totalProducts: number;
   totalInventoryValue: number;
+  storeBalance?: number;
+  activeShift?: StoreShift | null;
+  cashInDrawerNow?: number;
+  activeCashierCount?: number;
+  todayTransactionsCount?: number;
+  todayExpenses?: number;
+  lowStockCount?: number;
 }
+
 
 export type DashboardSummary = DashboardOverview & {
   todayProfit?: number;

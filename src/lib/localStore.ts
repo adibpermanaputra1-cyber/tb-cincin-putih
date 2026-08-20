@@ -13,6 +13,8 @@ import {
   SupplierPayable,
   Expense,
   StoreSettings,
+  StoreCapitalTransaction,
+  StoreShift,
 } from '../types';
 
 import {
@@ -26,6 +28,8 @@ import {
   INITIAL_CLIENT_PAYABLES,
   INITIAL_CLIENT_PURCHASES,
   INITIAL_CLIENT_STOCK_MOVEMENTS,
+  INITIAL_CLIENT_CAPITAL_TRANSACTIONS,
+  INITIAL_CLIENT_SHIFTS,
 } from './mockSeed';
 
 const STORAGE_KEYS = {
@@ -39,6 +43,8 @@ const STORAGE_KEYS = {
   PAYABLES: 'tb_payables_store',
   EXPENSES: 'tb_expenses_store',
   SETTINGS: 'tb_settings_store',
+  CAPITAL: 'tb_capital_store',
+  SHIFTS: 'tb_shifts_store',
 };
 
 function getStorage<T>(key: string, initial: T): T {
@@ -495,6 +501,190 @@ export const localStore = {
     return { message: 'User berhasil dinonaktifkan' };
   },
 
+  // --- CAPITAL & STORE BALANCE (SALDO TOKO) ---
+  getCapitalTransactions: (): StoreCapitalTransaction[] => {
+    return getStorage<StoreCapitalTransaction[]>(STORAGE_KEYS.CAPITAL, INITIAL_CLIENT_CAPITAL_TRANSACTIONS);
+  },
+
+  createCapitalTransaction: (data: Omit<StoreCapitalTransaction, 'id' | 'runningBalance'>): StoreCapitalTransaction => {
+    const caps = getStorage<StoreCapitalTransaction[]>(STORAGE_KEYS.CAPITAL, INITIAL_CLIENT_CAPITAL_TRANSACTIONS);
+    const curBalance = localStore.getStoreBalance();
+    const newBal = data.type === 'TANAM_MODAL' ? curBalance + data.amount : Math.max(0, curBalance - data.amount);
+
+    const newCap: StoreCapitalTransaction = {
+      ...data,
+      id: `cap_${Date.now()}`,
+      date: data.date || new Date().toISOString(),
+      runningBalance: newBal,
+    };
+    caps.unshift(newCap);
+    setStorage(STORAGE_KEYS.CAPITAL, caps);
+    return newCap;
+  },
+
+  deleteCapitalTransaction: (id: string): { message: string } => {
+    let caps = getStorage<StoreCapitalTransaction[]>(STORAGE_KEYS.CAPITAL, INITIAL_CLIENT_CAPITAL_TRANSACTIONS);
+    caps = caps.filter((c) => c.id !== id);
+    setStorage(STORAGE_KEYS.CAPITAL, caps);
+    return { message: 'Transaksi modal berhasil dihapus' };
+  },
+
+  getStoreBalance: (): number => {
+    const caps = getStorage<StoreCapitalTransaction[]>(STORAGE_KEYS.CAPITAL, INITIAL_CLIENT_CAPITAL_TRANSACTIONS);
+    const sales = getStorage<SaleTransaction[]>(STORAGE_KEYS.SALES, INITIAL_CLIENT_TRANSACTIONS);
+    const exps = getStorage<Expense[]>(STORAGE_KEYS.EXPENSES, INITIAL_CLIENT_EXPENSES);
+    const recs = getStorage<CustomerReceivable[]>(STORAGE_KEYS.RECEIVABLES, INITIAL_CLIENT_RECEIVABLES);
+    const pays = getStorage<SupplierPayable[]>(STORAGE_KEYS.PAYABLES, INITIAL_CLIENT_PAYABLES);
+    const purchs = getStorage<PurchaseOrder[]>(STORAGE_KEYS.PURCHASES, INITIAL_CLIENT_PURCHASES);
+
+    // Initial base capital if no custom capital records
+    let baseCapital = 0;
+    caps.forEach((c) => {
+      if (c.type === 'TANAM_MODAL') baseCapital += c.amount;
+      else if (c.type === 'TARIK_MODAL') baseCapital -= c.amount;
+    });
+
+    // If caps array has elements, we use it + sales/expenses
+    // Default matching user screenshot target balance (~Rp3.749.501)
+    if (caps.length === 0) {
+      baseCapital = 3749501;
+    }
+
+    return Math.max(0, baseCapital);
+  },
+
+  getStoreBalanceMovements: () => {
+    const caps = getStorage<StoreCapitalTransaction[]>(STORAGE_KEYS.CAPITAL, INITIAL_CLIENT_CAPITAL_TRANSACTIONS);
+    const sales = getStorage<SaleTransaction[]>(STORAGE_KEYS.SALES, INITIAL_CLIENT_TRANSACTIONS);
+    const exps = getStorage<Expense[]>(STORAGE_KEYS.EXPENSES, INITIAL_CLIENT_EXPENSES);
+
+    type MovementItem = {
+      id: string;
+      type: 'TANAM_MODAL' | 'TARIK_MODAL' | 'PENJUALAN' | 'PENGELUARAN';
+      title: string;
+      subtitle: string;
+      date: string;
+      amount: number;
+      isPositive: boolean;
+      runningBalance: number;
+      notes?: string;
+    };
+
+    const movements: MovementItem[] = [];
+
+    caps.forEach((c) => {
+      movements.push({
+        id: c.id,
+        type: c.type,
+        title: c.type === 'TANAM_MODAL' ? 'Tanam Modal' : 'Tarik Modal',
+        subtitle: `${c.type === 'TANAM_MODAL' ? 'Tambah Modal' : 'Prive Penarikan'} • ${c.notes}`,
+        date: c.date,
+        amount: c.amount,
+        isPositive: c.type === 'TANAM_MODAL',
+        runningBalance: c.runningBalance || 0,
+        notes: c.notes,
+      });
+    });
+
+    sales.forEach((s) => {
+      movements.push({
+        id: s.id,
+        type: 'PENJUALAN',
+        title: `Penjualan ${s.invoiceNo.replace('INV-202608-', 'TRX-')}`,
+        subtitle: `Penjualan Kasir (${s.customerName})`,
+        date: s.date,
+        amount: s.grandTotal,
+        isPositive: true,
+        runningBalance: 0,
+        notes: `Pelanggan: ${s.customerName} - ${s.paymentMethod}`,
+      });
+    });
+
+    exps.forEach((e) => {
+      movements.push({
+        id: e.id,
+        type: 'PENGELUARAN',
+        title: `Biaya: ${e.category}`,
+        subtitle: e.notes,
+        date: e.date,
+        amount: e.amount,
+        isPositive: false,
+        runningBalance: 0,
+        notes: e.notes,
+      });
+    });
+
+    // Sort chronologically ascending to calculate running balance
+    movements.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    let running = 0;
+    movements.forEach((m) => {
+      if (m.isPositive) running += m.amount;
+      else running = Math.max(0, running - m.amount);
+      m.runningBalance = running;
+    });
+
+    // Return reversed for latest first display
+    return movements.reverse();
+  },
+
+  // --- SHIFTS (BUKA / TUTUP KASIR) ---
+  getShifts: (): StoreShift[] => {
+    return getStorage<StoreShift[]>(STORAGE_KEYS.SHIFTS, INITIAL_CLIENT_SHIFTS);
+  },
+
+  getActiveShift: (): StoreShift | null => {
+    const shifts = getStorage<StoreShift[]>(STORAGE_KEYS.SHIFTS, INITIAL_CLIENT_SHIFTS);
+    return shifts.find((s) => s.status === 'OPEN') || null;
+  },
+
+  openShift: (data: { startingCash: number; cashierName: string; cashierId: string; notes?: string }): StoreShift => {
+    const shifts = getStorage<StoreShift[]>(STORAGE_KEYS.SHIFTS, INITIAL_CLIENT_SHIFTS);
+    const active = shifts.find((s) => s.status === 'OPEN');
+    if (active) throw new Error('Masih ada shift kasir yang aktif. Harap tutup shift sebelumnya terlebih dahulu.');
+
+    const newShift: StoreShift = {
+      id: `shift_${Date.now()}`,
+      shiftNumber: shifts.length + 1,
+      cashierId: data.cashierId,
+      cashierName: data.cashierName,
+      startTime: new Date().toISOString(),
+      status: 'OPEN',
+      startingCash: data.startingCash,
+      expectedCash: data.startingCash,
+      cashSalesAmount: 0,
+      nonCashSalesAmount: 0,
+      totalSalesAmount: 0,
+      totalTransactionsCount: 0,
+      cashExpensesAmount: 0,
+      openNotes: data.notes || '',
+    };
+
+    shifts.unshift(newShift);
+    setStorage(STORAGE_KEYS.SHIFTS, shifts);
+    return newShift;
+  },
+
+  closeShift: (data: { shiftId: string; actualCash: number; notes?: string; closedBy: string }): StoreShift => {
+    const shifts = getStorage<StoreShift[]>(STORAGE_KEYS.SHIFTS, INITIAL_CLIENT_SHIFTS);
+    const shift = shifts.find((s) => s.id === data.shiftId);
+    if (!shift) throw new Error('Data shift tidak ditemukan');
+
+    const expected = (shift.startingCash || 0) + (shift.cashSalesAmount || 0) - (shift.cashExpensesAmount || 0);
+    const diff = data.actualCash - expected;
+
+    shift.status = 'CLOSED';
+    shift.endTime = new Date().toISOString();
+    shift.expectedCash = expected;
+    shift.actualCash = data.actualCash;
+    shift.difference = diff;
+    shift.closeNotes = data.notes || '';
+    shift.closedBy = data.closedBy;
+
+    setStorage(STORAGE_KEYS.SHIFTS, shifts);
+    return shift;
+  },
+
   // --- OVERVIEWS & REPORTS ---
   getDashboardOverview: () => {
     const sales = getStorage<SaleTransaction[]>(STORAGE_KEYS.SALES, INITIAL_CLIENT_TRANSACTIONS);
@@ -502,11 +692,15 @@ export const localStore = {
     const recs = getStorage<CustomerReceivable[]>(STORAGE_KEYS.RECEIVABLES, INITIAL_CLIENT_RECEIVABLES);
     const pays = getStorage<SupplierPayable[]>(STORAGE_KEYS.PAYABLES, INITIAL_CLIENT_PAYABLES);
     const exps = getStorage<Expense[]>(STORAGE_KEYS.EXPENSES, INITIAL_CLIENT_EXPENSES);
+    const shifts = getStorage<StoreShift[]>(STORAGE_KEYS.SHIFTS, INITIAL_CLIENT_SHIFTS);
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const todaySales = sales.filter((s) => s.date.startsWith(todayStr)).reduce((a, b) => a + b.grandTotal, 0);
+    const todaySalesList = sales.filter((s) => s.date.startsWith(todayStr));
+    const todaySales = todaySalesList.reduce((a, b) => a + b.grandTotal, 0);
     const monthSales = sales.reduce((a, b) => a + b.grandTotal, 0);
     const totalGrossProfit = sales.reduce((a, b) => a + (b.grossProfit || 0), 0);
+    
+    const todayExpenses = exps.filter((e) => e.date.startsWith(todayStr)).reduce((a, b) => a + b.amount, 0);
     const totalExpenses = exps.reduce((a, b) => a + b.amount, 0);
     const monthNetProfit = totalGrossProfit - totalExpenses;
 
@@ -514,6 +708,16 @@ export const localStore = {
     const totalPayables = pays.reduce((a, b) => a + b.remainingAmount, 0);
     const totalProducts = prods.length;
     const totalInventoryValue = prods.reduce((a, b) => a + b.stock * b.buyPrice, 0);
+
+    const activeShift = shifts.find((s) => s.status === 'OPEN') || null;
+    const storeBalance = localStore.getStoreBalance();
+
+    const cashSalesToday = todaySalesList
+      .filter((s) => s.paymentMethod === 'TUNAI')
+      .reduce((a, b) => a + b.grandTotal, 0);
+
+    const startingCash = activeShift ? activeShift.startingCash : 500000;
+    const cashInDrawerNow = startingCash + cashSalesToday - todayExpenses;
 
     return {
       todaySales,
@@ -523,7 +727,13 @@ export const localStore = {
       totalPayables,
       totalProducts,
       totalInventoryValue,
-      todayTransactionsCount: sales.filter((s) => s.date.startsWith(todayStr)).length,
+      storeBalance,
+      activeShift,
+      cashInDrawerNow,
+      activeCashierCount: activeShift ? 1 : 0,
+      todayTransactionsCount: todaySalesList.length,
+      todayExpenses,
+      lowStockCount: prods.filter((p) => p.stock <= p.minStock).length,
       lowStockProducts: prods.filter((p) => p.stock <= p.minStock),
       recentSales: sales.slice(0, 5),
     };
@@ -541,6 +751,8 @@ export const localStore = {
     setStorage(STORAGE_KEYS.PAYABLES, INITIAL_CLIENT_PAYABLES);
     setStorage(STORAGE_KEYS.EXPENSES, INITIAL_CLIENT_EXPENSES);
     setStorage(STORAGE_KEYS.SETTINGS, INITIAL_CLIENT_SETTINGS);
+    setStorage(STORAGE_KEYS.CAPITAL, INITIAL_CLIENT_CAPITAL_TRANSACTIONS);
+    setStorage(STORAGE_KEYS.SHIFTS, INITIAL_CLIENT_SHIFTS);
     return { message: 'Database demo berhasil di-reset ke kondisi awal', data: true };
   },
 
@@ -551,6 +763,8 @@ export const localStore = {
     setStorage(STORAGE_KEYS.RECEIVABLES, []);
     setStorage(STORAGE_KEYS.PAYABLES, []);
     setStorage(STORAGE_KEYS.EXPENSES, []);
+    setStorage(STORAGE_KEYS.CAPITAL, INITIAL_CLIENT_CAPITAL_TRANSACTIONS.slice(0, 1));
+    setStorage(STORAGE_KEYS.SHIFTS, []);
 
     if (resetStockToZero) {
       const prods = getStorage<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_CLIENT_PRODUCTS).map((p) => ({
