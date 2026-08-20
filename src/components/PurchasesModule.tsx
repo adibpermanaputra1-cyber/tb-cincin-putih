@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PurchaseOrder, Supplier, Product, User } from '../types';
 import { formatRupiah, formatNumber, formatIndonesianDate, formatDateOnly } from '../lib/format';
 import { api } from '../lib/api';
-import { Truck, Plus, CheckCircle2, UserPlus, FileText, X } from 'lucide-react';
+import { Truck, Plus, CheckCircle2, UserPlus, FileText, X, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface PurchasesModuleProps {
   purchases: PurchaseOrder[];
@@ -21,6 +21,33 @@ export const PurchasesModule: React.FC<PurchasesModuleProps> = ({
 }) => {
   const [isPOModalOpen, setIsPOModalOpen] = useState(false);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+
+  // Deletion state
+  const [deletingPO, setDeletingPO] = useState<PurchaseOrder | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (text: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ text, type });
+    setTimeout(() => {
+      setNotification((prev) => (prev?.text === text ? null : prev));
+    }, 4000);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingPO) return;
+    setIsDeleting(true);
+    try {
+      await api.deletePurchase(deletingPO.id);
+      showNotification(`Data Stok Masuk #${deletingPO.poNumber} berhasil dihapus!`);
+      setDeletingPO(null);
+      onRefresh();
+    } catch (err: any) {
+      showNotification(err.message || 'Gagal menghapus data pembelian', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Form State for Purchase Order
   const [supplierId, setSupplierId] = useState('');
@@ -165,6 +192,24 @@ export const PurchasesModule: React.FC<PurchasesModuleProps> = ({
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
       
+      {/* Toast Notification */}
+      {notification && (
+        <div
+          className={`p-3.5 rounded-2xl flex items-center gap-2 text-xs font-semibold animate-in fade-in duration-200 border ${
+            notification.type === 'success'
+              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+          }`}
+        >
+          {notification.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          )}
+          <span>{notification.text}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-lg">
         <div>
@@ -231,12 +276,13 @@ export const PurchasesModule: React.FC<PurchasesModuleProps> = ({
                 <th className="p-3.5">Metode Bayar</th>
                 <th className="p-3.5">Status Pembayaran</th>
                 <th className="p-3.5">Penerima</th>
+                <th className="p-3.5 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/80">
               {purchases.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                  <td colSpan={9} className="py-12 text-center text-slate-500">
                     Belum ada riwayat penerimaan stok dari supplier.
                   </td>
                 </tr>
@@ -288,6 +334,15 @@ export const PurchasesModule: React.FC<PurchasesModuleProps> = ({
                       )}
                     </td>
                     <td className="p-3.5 text-slate-400">{po.receivedBy}</td>
+                    <td className="p-3.5 text-center">
+                      <button
+                        onClick={() => setDeletingPO(po)}
+                        title="Hapus Data Stok Masuk"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -536,6 +591,52 @@ export const PurchasesModule: React.FC<PurchasesModuleProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: DELETE CONFIRMATION */}
+      {deletingPO && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl text-slate-100">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-14 h-14 bg-rose-500/15 border border-rose-500/30 rounded-2xl flex items-center justify-center mx-auto text-rose-400">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Hapus Data Stok Masuk?</h3>
+                <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                  Apakah Anda yakin ingin menghapus surat pesanan{' '}
+                  <strong className="text-white font-mono font-bold">#{deletingPO.poNumber}</strong> dari supplier{' '}
+                  <strong className="text-white font-bold">{deletingPO.supplierName}</strong> senilai{' '}
+                  <strong className="text-emerald-400 font-bold">{formatRupiah(deletingPO.totalAmount)}</strong>?
+                </p>
+              </div>
+
+              <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400 text-left space-y-1">
+                <div>• Riwayat transaksi PO ini akan dihapus dari daftar.</div>
+                <div>• Buku utang supplier yang terafiliasi dengan PO ini akan dibersihkan.</div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeletingPO(null)}
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-rose-950/50 cursor-pointer"
+                >
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  <span>{isDeleting ? 'Menghapus...' : 'Ya, Hapus Data'}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

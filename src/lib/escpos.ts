@@ -190,13 +190,20 @@ export function generateEscPosReceipt(
   builder.divider('-', colWidth);
 
   // Items List
-  transaction.items.forEach((item) => {
+  const items = (transaction.items || (transaction as any).cart || []) as any[];
+  items.forEach((item) => {
+    const rawName = item.productName || item.name || item.nama_barang || item.nama || item.title || 'Barang Material';
+    const rawQty = Number(item.quantity ?? item.qty ?? item.jumlah ?? 1);
+    const rawUnit = item.unit || item.sellingUnit || item.selectedUnit || item.satuan || 'Pcs';
+    const rawPrice = Number(item.unitPrice ?? item.activePrice ?? item.price ?? item.harga ?? item.sellPrice ?? 0);
+    const rawSubtotal = Number(item.subtotal ?? (rawQty * rawPrice));
+
     builder.bold(true);
-    builder.textLine(item.productName);
+    builder.textLine(rawName);
     builder.bold(false);
 
-    const qtyPrice = `${item.quantity} ${item.unit} x ${formatRupiah(item.unitPrice)}`;
-    const subtotal = formatRupiah(item.subtotal);
+    const qtyPrice = `${rawQty} ${rawUnit} x ${formatRupiah(rawPrice)}`;
+    const subtotal = formatRupiah(rawSubtotal);
     builder.twoColumn(` ${qtyPrice}`, subtotal, colWidth);
   });
 

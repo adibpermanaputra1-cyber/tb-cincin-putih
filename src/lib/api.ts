@@ -14,7 +14,7 @@ import {
   CashFlowReport,
 } from '../types';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE_URL = ((import.meta as any).env?.VITE_API_URL || '').replace(/\/$/, '');
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   const fullUrl = url.startsWith('http://') || url.startsWith('https://')
@@ -123,9 +123,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(poData),
     }),
+  deletePurchase: (id: string) =>
+    fetchJSON<{ message: string }>(`/api/purchases/${id}`, {
+      method: 'DELETE',
+    }),
 
   // Payables (Buku Utang Supplier)
   getPayables: () => fetchJSON<SupplierPayable[]>('/api/payables'),
+  deletePayable: (id: string) =>
+    fetchJSON<{ message: string }>(`/api/payables/${id}`, {
+      method: 'DELETE',
+    }),
   payPayable: (
     id: string,
     data: { amount: number; paymentMethod: string; paidBy: string; notes?: string }

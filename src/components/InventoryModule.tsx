@@ -276,6 +276,14 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({
     setIsDeletingProduct(true);
     try {
       await api.deleteProduct(deletingProduct.id);
+      try {
+        const cached = localStorage.getItem('tb_cache_products');
+        if (cached) {
+          const list: Product[] = JSON.parse(cached);
+          const filtered = list.filter((p) => p.id !== deletingProduct.id);
+          localStorage.setItem('tb_cache_products', JSON.stringify(filtered));
+        }
+      } catch {}
       setDeletingProduct(null);
       onRefresh();
     } catch (err: any) {
@@ -1083,35 +1091,37 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({
 
       {/* MODAL: DELETE PRODUCT CONFIRMATION */}
       {deletingProduct && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl text-slate-100">
-            <div className="p-5 bg-rose-950/30 border-b border-slate-800 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
-                <Trash2 className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border-2 border-rose-500/50 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl shadow-rose-950/60 ring-1 ring-rose-500/30 text-slate-100 animate-in zoom-in-95 duration-200">
+            <div className="p-5 bg-gradient-to-r from-rose-950/70 via-slate-900 to-slate-900 border-b border-rose-500/30 flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0 shadow-inner">
+                <Trash2 className="w-5 h-5 text-rose-400 animate-pulse" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-white">Hapus Material Bangunan?</h3>
-                <p className="text-xs text-slate-400">Data master barang ini akan dihapus dari katalog toko.</p>
+                <h3 className="font-extrabold text-base text-white tracking-tight">Hapus Material Bangunan?</h3>
+                <p className="text-xs text-rose-200/70 mt-0.5">Data master barang ini akan dihapus dari katalog toko.</p>
               </div>
             </div>
 
             <div className="p-5 space-y-3 text-xs">
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">SKU / Kode:</span>
-                  <span className="font-mono text-slate-200 font-semibold">{deletingProduct.sku}</span>
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/90 space-y-2.5 shadow-inner">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-900">
+                  <span className="text-slate-400 font-medium">SKU / Kode:</span>
+                  <span className="font-mono text-slate-200 font-bold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{deletingProduct.sku}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Nama Barang:</span>
+                <div className="flex justify-between items-center pb-2 border-b border-slate-900">
+                  <span className="text-slate-400 font-medium">Nama Barang:</span>
                   <span className="font-bold text-white text-right">{deletingProduct.name}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Kategori:</span>
-                  <span className="text-slate-300">{deletingProduct.category}</span>
+                <div className="flex justify-between items-center pb-2 border-b border-slate-900">
+                  <span className="text-slate-400 font-medium">Kategori:</span>
+                  <span className="text-emerald-400 font-semibold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">{deletingProduct.category}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Sisa Stok Fisik:</span>
-                  <span className="font-bold text-amber-400">{deletingProduct.stock} {deletingProduct.baseUnit}</span>
+                  <span className="text-slate-400 font-medium">Sisa Stok Fisik:</span>
+                  <span className="font-extrabold text-amber-400 bg-amber-950/40 px-2.5 py-0.5 rounded-lg border border-amber-800/40 text-xs">
+                    {deletingProduct.stock} {deletingProduct.baseUnit}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1129,7 +1139,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({
                 type="button"
                 onClick={handleConfirmDeleteProduct}
                 disabled={isDeletingProduct}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-rose-950/50 transition cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-rose-950/70 border border-rose-400/50 transition cursor-pointer active:scale-95"
               >
                 {isDeletingProduct ? (
                   <>
@@ -1138,7 +1148,7 @@ export const InventoryModule: React.FC<InventoryModuleProps> = ({
                   </>
                 ) : (
                   <>
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 text-rose-100" />
                     <span>Ya, Hapus Barang</span>
                   </>
                 )}

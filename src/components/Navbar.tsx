@@ -191,14 +191,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
 
-            {/* Logout button */}
+            {/* Logout button in header */}
             <button
               onClick={onLogout}
-              title="Keluar / Ganti Akun"
-              className="min-w-[38px] min-h-[38px] p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs transition cursor-pointer flex items-center justify-center gap-1"
+              id="header-logout-btn"
+              title="Keluar dari Sistem Kasir / Ganti Akun"
+              className="min-h-[38px] px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-700 to-rose-900 hover:from-rose-600 hover:to-rose-800 text-white border border-rose-500/60 text-xs font-bold transition-all duration-150 cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-rose-950/60 active:scale-95"
             >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden xl:inline text-xs font-medium">Keluar</span>
+              <LogOut className="w-4 h-4 text-rose-200 shrink-0" />
+              <span className="text-xs font-bold tracking-wide">Keluar</span>
             </button>
           </div>
         </div>

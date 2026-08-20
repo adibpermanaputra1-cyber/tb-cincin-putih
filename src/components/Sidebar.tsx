@@ -66,6 +66,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ownerOnly: true,
       badge: null,
       color: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+      activeBg: 'bg-emerald-600 border-emerald-500 shadow-emerald-950/60 text-white',
     },
     {
       id: 'pos',
@@ -75,6 +77,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: 'Utama',
       badgeColor: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
       color: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+      activeBg: 'bg-emerald-600 border-emerald-500 shadow-emerald-950/60 text-white',
     },
     {
       id: 'inventory',
@@ -84,6 +88,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: lowStockCount > 0 ? `${lowStockCount} Menipis` : null,
       badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
       color: 'text-amber-400',
+      iconBg: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+      activeBg: 'bg-amber-600 border-amber-500 shadow-amber-950/60 text-white',
     },
     {
       id: 'purchases',
@@ -92,6 +98,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ownerOnly: true,
       badge: null,
       color: 'text-blue-400',
+      iconBg: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+      activeBg: 'bg-blue-600 border-blue-500 shadow-blue-950/60 text-white',
     },
     {
       id: 'receivables',
@@ -101,6 +109,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: pendingReceivablesCount > 0 ? `${pendingReceivablesCount} Kasbon` : null,
       badgeColor: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
       color: 'text-rose-400',
+      iconBg: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+      activeBg: 'bg-rose-600 border-rose-500 shadow-rose-950/60 text-white',
     },
     {
       id: 'payables',
@@ -109,6 +119,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ownerOnly: true,
       badge: null,
       color: 'text-purple-400',
+      iconBg: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+      activeBg: 'bg-purple-600 border-purple-500 shadow-purple-950/60 text-white',
     },
     {
       id: 'expenses',
@@ -117,6 +129,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ownerOnly: true,
       badge: null,
       color: 'text-orange-400',
+      iconBg: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
+      activeBg: 'bg-orange-600 border-orange-500 shadow-orange-950/60 text-white',
     },
     {
       id: 'reports',
@@ -124,8 +138,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: LineChart,
       ownerOnly: true,
       badge: 'Keuangan',
-      badgeColor: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+      badgeColor: 'bg-teal-500/20 text-teal-300 border border-teal-500/30',
       color: 'text-teal-400',
+      iconBg: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
+      activeBg: 'bg-teal-600 border-teal-500 shadow-teal-950/60 text-white',
     },
     {
       id: 'users',
@@ -134,6 +150,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ownerOnly: true,
       badge: null,
       color: 'text-indigo-400',
+      iconBg: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+      activeBg: 'bg-indigo-600 border-indigo-500 shadow-indigo-950/60 text-white',
     },
     {
       id: 'settings',
@@ -141,8 +159,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Settings,
       ownerOnly: true,
       badge: 'Bank/QRIS',
-      badgeColor: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
-      color: 'text-blue-400',
+      badgeColor: 'bg-sky-500/20 text-sky-300 border border-sky-500/30',
+      color: 'text-sky-400',
+      iconBg: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+      activeBg: 'bg-sky-600 border-sky-500 shadow-sky-950/60 text-white',
     },
   ];
 
@@ -199,20 +219,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => handleTabClick(item.id)}
-              className={`w-full min-h-[44px] flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer border ${
+              className={`w-full min-h-[44px] flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer border ${
                 isActive
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-950/60 border-emerald-500'
-                  : 'text-slate-200 hover:bg-slate-800 hover:text-white border-transparent'
+                  ? item.activeBg
+                  : 'text-slate-200 hover:bg-slate-800/90 hover:text-white border-transparent'
               }`}
             >
-              <div className="flex items-center gap-3 truncate">
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : item.color}`} />
+              <div className="flex items-center gap-2.5 truncate">
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : item.iconBg || 'bg-slate-800 text-slate-300'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                </div>
                 <span className="truncate">{item.label}</span>
               </div>
               {item.badge && (
                 <span
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                    isActive ? 'bg-white/20 text-white' : item.badgeColor || 'bg-slate-800 text-slate-300'
+                    isActive ? 'bg-white/25 text-white' : item.badgeColor || 'bg-slate-800 text-slate-300'
                   }`}
                 >
                   {item.badge}

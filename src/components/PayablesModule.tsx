@@ -10,6 +10,9 @@ import {
   ArrowRight,
   Truck,
   X,
+  Trash2,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 
 interface PayablesModuleProps {
@@ -29,6 +32,33 @@ export const PayablesModule: React.FC<PayablesModuleProps> = ({
   const [payNotes, setPayNotes] = useState('');
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Deletion state
+  const [deletingPayable, setDeletingPayable] = useState<SupplierPayable | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const showNotification = (text: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ text, type });
+    setTimeout(() => {
+      setNotification((prev) => (prev?.text === text ? null : prev));
+    }, 4000);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingPayable) return;
+    setIsDeleting(true);
+    try {
+      await api.deletePayable(deletingPayable.id);
+      showNotification(`Data utang PO #${deletingPayable.poNumber} berhasil dihapus!`);
+      setDeletingPayable(null);
+      onRefresh();
+    } catch (err: any) {
+      showNotification(err.message || 'Gagal menghapus data utang supplier', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const totalOutstanding = payables.reduce((sum, p) => sum + p.remainingAmount, 0);
   const totalPaid = payables.reduce((sum, p) => sum + p.paidAmount, 0);
@@ -69,6 +99,24 @@ export const PayablesModule: React.FC<PayablesModuleProps> = ({
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
       
+      {/* Toast Notification */}
+      {notification && (
+        <div
+          className={`p-3.5 rounded-2xl flex items-center gap-2 text-xs font-semibold animate-in fade-in duration-200 border ${
+            notification.type === 'success'
+              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+          }`}
+        >
+          {notification.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          )}
+          <span>{notification.text}</span>
+        </div>
+      )}
+
       {/* Header Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
@@ -189,14 +237,23 @@ export const PayablesModule: React.FC<PayablesModuleProps> = ({
                         </span>
                       </td>
                       <td className="p-3.5 text-center">
-                        {!isSettled && (
+                        <div className="flex items-center justify-center gap-1.5">
+                          {!isSettled && (
+                            <button
+                              onClick={() => handleOpenPayModal(p)}
+                              className="bg-purple-600 hover:bg-purple-500 text-white px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                            >
+                              <span>Bayar Utang</span>
+                            </button>
+                          )}
                           <button
-                            onClick={() => handleOpenPayModal(p)}
-                            className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                            onClick={() => setDeletingPayable(p)}
+                            title="Hapus Data Utang"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
                           >
-                            <span>Bayar Utang</span>
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -293,6 +350,52 @@ export const PayablesModule: React.FC<PayablesModuleProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: DELETE CONFIRMATION */}
+      {deletingPayable && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl text-slate-100">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-14 h-14 bg-rose-500/15 border border-rose-500/30 rounded-2xl flex items-center justify-center mx-auto text-rose-400">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Hapus Data Utang Usaha?</h3>
+                <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                  Apakah Anda yakin ingin menghapus catatan utang PO{' '}
+                  <strong className="text-white font-mono font-bold">#{deletingPayable.poNumber}</strong> kepada{' '}
+                  <strong className="text-white font-bold">{deletingPayable.supplierName}</strong> dengan sisa tagihan{' '}
+                  <strong className="text-amber-400 font-bold">{formatRupiah(deletingPayable.remainingAmount)}</strong>?
+                </p>
+              </div>
+
+              <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400 text-left space-y-1">
+                <div>• Riwayat buku utang supplier ini akan dihapus permanen dari sistem.</div>
+                <div>• Pastikan Anda telah mengonfirmasi dengan staf accounting sebelum menghapus.</div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeletingPayable(null)}
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-rose-950/50 cursor-pointer"
+                >
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  <span>{isDeleting ? 'Menghapus...' : 'Ya, Hapus Data'}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

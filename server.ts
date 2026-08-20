@@ -185,6 +185,12 @@ async function startServer() {
     }
   });
 
+  app.delete('/api/purchases/:id', (req: Request, res: Response) => {
+    const ok = db.deletePurchase(req.params.id);
+    if (!ok) return res.status(404).json({ error: 'Data pembelian tidak ditemukan' });
+    res.json({ message: 'Data stok masuk & PO berhasil dihapus' });
+  });
+
   // --- RECEIVABLES (BUKU PIUTANG / KASBON) ---
   app.get('/api/receivables', (req: Request, res: Response) => {
     res.json(db.getReceivables());
@@ -213,6 +219,12 @@ async function startServer() {
     const updated = db.payPayable(req.params.id, Number(amount), paymentMethod || 'TRANSFER', paidBy || 'Owner', notes);
     if (!updated) return res.status(404).json({ error: 'Data utang tidak ditemukan' });
     res.json(updated);
+  });
+
+  app.delete('/api/payables/:id', (req: Request, res: Response) => {
+    const ok = db.deletePayable(req.params.id);
+    if (!ok) return res.status(404).json({ error: 'Data utang supplier tidak ditemukan' });
+    res.json({ message: 'Data utang supplier berhasil dihapus' });
   });
 
   // --- EXPENSES (BEBAN OPERASIONAL) ---

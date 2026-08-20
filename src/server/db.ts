@@ -1907,8 +1907,29 @@ class DatabaseEngine {
     return newPO;
   }
 
+  public deletePurchase(id: string): boolean {
+    const idx = this.data.purchases.findIndex(p => p.id === id);
+    if (idx === -1) return false;
+    const po = this.data.purchases[idx];
+    
+    // Also remove linked payable if any
+    this.data.payables = this.data.payables.filter(p => p.poId !== po.id && p.poNumber !== po.poNumber);
+
+    this.data.purchases.splice(idx, 1);
+    this.save();
+    return true;
+  }
+
   public getPayables(): SupplierPayable[] {
     return this.data.payables;
+  }
+
+  public deletePayable(id: string): boolean {
+    const idx = this.data.payables.findIndex(p => p.id === id);
+    if (idx === -1) return false;
+    this.data.payables.splice(idx, 1);
+    this.save();
+    return true;
   }
 
   public payPayable(

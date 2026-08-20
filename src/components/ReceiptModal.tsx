@@ -165,17 +165,24 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           </div>
           <div class="divider"></div>
 
-          ${transaction.items
+          ${(transaction.items || (transaction as any).cart || [])
             .map(
-              (item) => `
+              (item: any) => {
+                const rawName = item.productName || item.name || item.nama_barang || item.nama || 'Barang Material';
+                const rawQty = Number(item.quantity ?? item.qty ?? item.jumlah ?? 1);
+                const rawUnit = item.unit || item.sellingUnit || item.selectedUnit || item.satuan || 'Pcs';
+                const rawPrice = Number(item.unitPrice ?? item.activePrice ?? item.price ?? item.harga ?? item.sellPrice ?? 0);
+                const rawSubtotal = Number(item.subtotal ?? (rawQty * rawPrice));
+                return `
             <div class="item-row">
-              <div class="font-bold">${item.productName}</div>
+              <div class="font-bold">${rawName}</div>
               <div class="row" style="font-size: 10px; color: #333;">
-                <span>${item.quantity} ${item.unit} x ${formatRupiah(item.unitPrice)}</span>
-                <span class="font-bold" style="color: #000;">${formatRupiah(item.subtotal)}</span>
+                <span>${rawQty} ${rawUnit} x ${formatRupiah(rawPrice)}</span>
+                <span class="font-bold" style="color: #000;">${formatRupiah(rawSubtotal)}</span>
               </div>
             </div>
-          `
+          `;
+              }
             )
             .join('')}
 
