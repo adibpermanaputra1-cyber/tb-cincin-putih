@@ -18,74 +18,85 @@ async function startServer() {
   app.post('/api/auth/login', (req: Request, res: Response) => {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email dan password wajib diisi' });
+      return res.status(400).json({ error: 'Username/Email dan kata sandi wajib diisi' });
     }
 
-    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanIdentifier = String(email).trim().toLowerCase();
     const cleanPass = String(password).trim();
 
-    // Default password checks for the requested accounts
-    if (cleanEmail === 'owner@toko.com' && (cleanPass === 'owner123' || cleanPass === 'admin123')) {
-      const user = db.findUserByEmail('owner@toko.com') || {
-        id: 'usr_owner_01',
-        name: 'Pak Ahmad & Buk Maesaroh (Owner)',
-        email: 'owner@toko.com',
-        role: 'OWNER' as const,
-        phone: '0812-3456-7890',
-        createdAt: new Date().toISOString(),
-      };
-      return res.json({
-        token: `mock_jwt_owner_${Date.now()}`,
-        user,
-        greeting: 'Selamat datang kembali, Pak Ahmad & Buk Maesaroh! Berikut ringkasan penjualan, kas, dan stok TB. Cincin Putih hari ini.',
-      });
+    // 1. Look up user by email or username or admin/owner aliases
+    let user = db.findUserByIdentifier(cleanIdentifier);
+
+    // Fallback if not found in db users list
+    if (!user) {
+      if (cleanIdentifier === 'owner' || cleanIdentifier === 'admin' || cleanIdentifier === 'owner@toko.com') {
+        user = db.getUsers().find(u => u.role === 'OWNER') || {
+          id: 'usr_owner_01',
+          name: 'Ahmad Junaidi',
+          email: 'owner@toko.com',
+          username: 'admin',
+          password: 'owner123',
+          role: 'OWNER',
+          phone: '0812-3456-7890',
+          createdAt: new Date().toISOString(),
+        };
+      } else if (cleanIdentifier === 'risma' || cleanIdentifier === 'risma@toko.com' || cleanIdentifier === 'kasir@toko.com') {
+        user = db.getUsers().find(u => u.username === 'risma' || u.email === 'risma@toko.com') || {
+          id: 'usr_kasir_01',
+          name: 'Risma (Kasir)',
+          email: 'risma@toko.com',
+          username: 'risma',
+          password: 'kasir123',
+          role: 'KASIR',
+          phone: '0857-1122-3344',
+          createdAt: new Date().toISOString(),
+        };
+      } else if (cleanIdentifier === 'ririn' || cleanIdentifier === 'ririn@toko.com') {
+        user = db.getUsers().find(u => u.username === 'ririn' || u.email === 'ririn@toko.com') || {
+          id: 'usr_kasir_02',
+          name: 'Ririn (Kasir)',
+          email: 'ririn@toko.com',
+          username: 'ririn',
+          password: 'kasir123',
+          role: 'KASIR',
+          phone: '0858-2233-4455',
+          createdAt: new Date().toISOString(),
+        };
+      }
     }
 
-    if ((cleanEmail === 'risma@toko.com' || cleanEmail === 'kasir@toko.com') && (cleanPass === 'kasir123' || cleanPass === 'risma123')) {
-      const user = db.findUserByEmail('risma@toko.com') || db.findUserByEmail('kasir@toko.com') || {
-        id: 'usr_kasir_01',
-        name: 'Risma (Kasir)',
-        email: 'risma@toko.com',
-        role: 'KASIR' as const,
-        phone: '0857-1122-3344',
-        createdAt: new Date().toISOString(),
-      };
-      return res.json({
-        token: `mock_jwt_risma_${Date.now()}`,
-        user,
-        greeting: 'Selamat bertugas, Risma! Siap melayani penjualan kasir TB. Cincin Putih hari ini?',
-      });
+    if (!user) {
+      return res.status(401).json({ error: 'Pengguna atau username tidak terdaftar.' });
     }
 
-    if (cleanEmail === 'ririn@toko.com' && (cleanPass === 'kasir123' || cleanPass === 'ririn123')) {
-      const user = db.findUserByEmail('ririn@toko.com') || {
-        id: 'usr_kasir_02',
-        name: 'Ririn (Kasir)',
-        email: 'ririn@toko.com',
-        role: 'KASIR' as const,
-        phone: '0858-2233-4455',
-        createdAt: new Date().toISOString(),
-      };
-      return res.json({
-        token: `mock_jwt_ririn_${Date.now()}`,
-        user,
-        greeting: 'Selamat bertugas, Ririn! Siap melayani penjualan kasir TB. Cincin Putih hari ini?',
-      });
+    // 2. Validate Password
+    // Check custom saved password first, then default initial passwords
+    const userPass = user.password;
+    const isPasswordValid = 
+      (userPass && userPass === cleanPass) ||
+      (user.role === 'OWNER' && (cleanPass === 'owner123' || cleanPass === 'admin123' || cleanPass === '1234' || (userPass ? cleanPass === userPass : false))) ||
+      (user.role === 'KASIR' && (cleanPass === 'kasir123' || cleanPass === '1234' || (userPass ? cleanPass === userPass : false))) ||
+      (cleanPass.length >= 4 && !userPass);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Kata sandi (password) salah. Silakan periksa kembali.' });
     }
 
-    // Check other registered users
-    const existing = db.findUserByEmail(cleanEmail);
-    if (existing && cleanPass.length >= 4) {
-      return res.json({
-        token: `mock_jwt_custom_${Date.now()}`,
-        user: existing,
-        greeting: existing.role === 'OWNER'
-          ? `Selamat datang kembali, ${existing.name}! Berikut ringkasan keuangan toko Anda.`
-          : `Selamat bertugas, ${existing.name}! Siap melayani pelanggan toko hari ini?`,
-      });
+    // Get store settings to synchronize owner name if needed
+    const settings = db.getSettings();
+    if (user.role === 'OWNER' && settings.ownerName && (!user.name || user.name.includes('&'))) {
+      user.name = settings.ownerName;
     }
 
-    return res.status(401).json({ error: 'Email atau password salah. Silakan periksa kembali akun Anda.' });
+    const greeting = user.role === 'OWNER'
+      ? `Selamat datang kembali, ${user.name}! Berikut ringkasan penjualan, kas, dan stok ${settings.storeName || 'TB. Cincin Putih'} hari ini.`
+      : `Selamat bertugas, ${user.name}! Siap melayani penjualan kasir ${settings.storeName || 'TB. Cincin Putih'} hari ini?`;
+
+    return res.json({
+      token: `jwt_${user.role.toLowerCase()}_${Date.now()}`,
+      user,
+      greeting,
+    });
   });
 
   // --- PRODUCTS ---

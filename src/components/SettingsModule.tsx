@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StoreSettings, BankAccountItem } from '../types';
+import { StoreSettings, BankAccountItem, User } from '../types';
 import { api } from '../lib/api';
 import {
   Settings,
@@ -35,6 +35,8 @@ interface SettingsModuleProps {
   hideResetDemo?: boolean;
   onToggleHideResetDemo?: (hide: boolean) => void;
   onOpenResetModal?: () => void;
+  currentUser?: User;
+  onUpdateCurrentUser?: (user: User) => void;
 }
 
 const COMMON_BANKS = [
@@ -56,6 +58,8 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
   hideResetDemo = false,
   onToggleHideResetDemo,
   onOpenResetModal,
+  currentUser,
+  onUpdateCurrentUser,
 }) => {
   const [activeTab, setActiveTab] = useState<'PROFILE' | 'PAYMENT' | 'RECEIPT' | 'BACKUP'>('PAYMENT');
 
@@ -290,6 +294,14 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
         qrisImageUrl,
         qrisInstruction,
       });
+
+      // Synchronize to current owner account if applicable
+      if (ownerName.trim() && currentUser && currentUser.role === 'OWNER') {
+        const updatedSelf = await api.updateUser(currentUser.id, { name: ownerName.trim() });
+        const newCurrent = { ...currentUser, ...updatedSelf };
+        localStorage.setItem('tb_user', JSON.stringify(newCurrent));
+        if (onUpdateCurrentUser) onUpdateCurrentUser(newCurrent);
+      }
 
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3500);
@@ -840,13 +852,20 @@ export const SettingsModule: React.FC<SettingsModuleProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-slate-300 font-medium block mb-1">Nama Pemilik (Owner)</label>
+                <label className="text-slate-300 font-medium block mb-1 flex items-center justify-between">
+                  <span>Nama Pemilik (Owner)</span>
+                  <span className="text-[10px] text-emerald-400 font-semibold">Fleksibel Diubah</span>
+                </label>
                 <input
                   type="text"
                   value={ownerName}
                   onChange={(e) => setOwnerName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  placeholder="Contoh: Ahmad Junaidi / H. Hendra"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none focus:border-emerald-500"
                 />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Otomatis tersinkronisasi ke Dashboard, Header Toko, dan Nota Struk Kasir.
+                </p>
               </div>
               <div>
                 <label className="text-slate-300 font-medium block mb-1">Nomor Telepon / WA Toko</label>

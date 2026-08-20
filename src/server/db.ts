@@ -66,8 +66,10 @@ const INITIAL_SETTINGS: StoreSettings = {
 const INITIAL_USERS: User[] = [
   {
     id: 'usr_owner_01',
-    name: 'Pak Ahmad & Buk Maesaroh (Owner)',
+    name: 'Ahmad Junaidi',
     email: 'owner@toko.com',
+    username: 'admin',
+    password: 'owner123',
     role: 'OWNER',
     phone: '0812-3456-7890',
     createdAt: '2026-01-01T08:00:00.000Z',
@@ -77,6 +79,7 @@ const INITIAL_USERS: User[] = [
     name: 'Risma (Kasir)',
     email: 'risma@toko.com',
     username: 'risma',
+    password: 'kasir123',
     role: 'KASIR',
     phone: '0857-1122-3344',
     createdAt: '2026-01-05T08:00:00.000Z',
@@ -86,6 +89,7 @@ const INITIAL_USERS: User[] = [
     name: 'Ririn (Kasir)',
     email: 'ririn@toko.com',
     username: 'ririn',
+    password: 'kasir123',
     role: 'KASIR',
     phone: '0858-2233-4455',
     createdAt: '2026-01-05T08:00:00.000Z',
@@ -1490,6 +1494,16 @@ class DatabaseEngine {
 
   public findUserByEmail(email: string): User | undefined {
     return this.data.users.find(u => u.email.toLowerCase() === email.toLowerCase().trim());
+  }
+
+  public findUserByIdentifier(identifier: string): User | undefined {
+    const clean = identifier.toLowerCase().trim();
+    return this.data.users.find(u => 
+      u.email.toLowerCase().trim() === clean || 
+      (u.username && u.username.toLowerCase().trim() === clean) ||
+      (clean === 'admin' && u.role === 'OWNER') ||
+      (clean === 'owner' && u.role === 'OWNER')
+    );
   }
 
   public createUser(user: Omit<User, 'id' | 'createdAt'>): User {

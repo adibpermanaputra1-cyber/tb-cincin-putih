@@ -10,16 +10,28 @@ import {
   CheckCircle2,
   AlertTriangle,
   Loader2,
+  Edit2,
+  Save,
+  Lock,
 } from 'lucide-react';
 
 interface UsersModuleProps {
   users: User[];
   currentUser: User;
   onRefresh: () => void;
+  onUpdateCurrentUser?: (user: User) => void;
 }
 
-export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, onRefresh }) => {
+export const UsersModule: React.FC<UsersModuleProps> = ({
+  users,
+  currentUser,
+  onRefresh,
+  onUpdateCurrentUser,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  // Form states
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -33,35 +45,92 @@ export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, on
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  const handleOpenAddModal = () => {
+    setEditingUser(null);
+    setUsername('');
+    setName('');
+    setPassword('');
+    setRole('KASIR');
+    setPhone('');
+    setErrorMsg(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (user: User) => {
+    setEditingUser(user);
+    setUsername(user.username || '');
+    setName(user.name);
+    setPassword('');
+    setRole(user.role);
+    setPhone(user.phone || '');
+    setErrorMsg(null);
+    setIsModalOpen(true);
+  };
+
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !name || !password) {
-      setErrorMsg('Username, Nama Lengkap, dan Password wajib diisi!');
+    if (!username || !name) {
+      setErrorMsg('Username dan Nama Lengkap wajib diisi!');
+      return;
+    }
+
+    if (!editingUser && !password) {
+      setErrorMsg('Password wajib diisi untuk pengguna baru!');
       return;
     }
 
     setIsSaving(true);
     setErrorMsg(null);
     try {
-      const userEmail = username.includes('@') ? username : `${username.toLowerCase().replace(/\s+/g, '')}@toko.com`;
-      await api.createUser({
-        name,
-        email: userEmail,
-        username,
-        role,
-        phone: phone || undefined,
-      });
+      if (editingUser) {
+        // Edit existing user
+        const updates: Partial<User> = {
+          name: name.trim(),
+          username: username.trim(),
+          role,
+          phone: phone.trim() || undefined,
+        };
+        if (password.trim()) {
+          updates.password = password.trim();
+        }
+
+        const updated = await api.updateUser(editingUser.id, updates);
+
+        // If editing self or owner, update settings & current user
+        if (editingUser.role === 'OWNER') {
+          await api.updateSettings({ ownerName: name.trim() });
+        }
+
+        if (editingUser.id === currentUser.id && onUpdateCurrentUser) {
+          const newCurrent = { ...currentUser, ...updated };
+          localStorage.setItem('tb_user', JSON.stringify(newCurrent));
+          onUpdateCurrentUser(newCurrent);
+        }
+
+        setSuccessMsg(`Akun ${name} berhasil diperbarui!`);
+      } else {
+        // Create new user
+        const userEmail = username.includes('@') ? username : `${username.toLowerCase().replace(/\s+/g, '')}@toko.com`;
+        await api.createUser({
+          name: name.trim(),
+          email: userEmail,
+          username: username.trim(),
+          role,
+          phone: phone.trim() || undefined,
+        });
+        setSuccessMsg('Akun pengguna baru berhasil ditambahkan!');
+      }
 
       setIsModalOpen(false);
       setUsername('');
       setName('');
       setPassword('');
       setPhone('');
-      setSuccessMsg('Akun pengguna baru berhasil ditambahkan!');
+      setEditingUser(null);
       setTimeout(() => setSuccessMsg(null), 3500);
       onRefresh();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Gagal menambahkan user baru');
+      setErrorMsg(err.message || 'Gagal menyimpan data pengguna');
     } finally {
       setIsSaving(false);
     }
@@ -116,15 +185,12 @@ export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, on
             Manajemen Hak Akses & Karyawan (RBAC)
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Atur akun Owner (Pemilik penuh) dan Karyawan Kasir (Akses terbatas ke POS & Cek Stok).
+            Atur akun Owner (Nama pemilik fleksibel dapat diubah) dan Karyawan Kasir.
           </p>
         </div>
 
         <button
-          onClick={() => {
-            setErrorMsg(null);
-            setIsModalOpen(true);
-          }}
+          onClick={handleOpenAddModal}
           className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950/50 transition cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
@@ -183,15 +249,27 @@ export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, on
                       </span>
                     </td>
                     <td className="p-3.5 text-center">
-                      {u.id !== currentUser.id && (
+                      <div className="flex items-center justify-center gap-1">
+                        {/* Edit Button */}
                         <button
-                          onClick={() => setDeletingUser(u)}
-                          title="Hapus Akun Pengguna"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                          onClick={() => handleOpenEditModal(u)}
+                          title={`Ubah data ${u.name}`}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition cursor-pointer"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Edit2 className="w-4 h-4" />
                         </button>
-                      )}
+
+                        {/* Delete Button */}
+                        {u.id !== currentUser.id && (
+                          <button
+                            onClick={() => setDeletingUser(u)}
+                            title="Hapus Akun Pengguna"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -201,12 +279,15 @@ export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, on
         </div>
       </div>
 
-      {/* MODAL: ADD USER */}
+      {/* MODAL: ADD / EDIT USER */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
             <div className="p-4 bg-slate-850 border-b border-slate-800 flex justify-between items-center">
-              <h3 className="font-bold text-sm text-white">Tambah Pengguna Baru</h3>
+              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                <Edit2 className="w-4 h-4 text-emerald-400" />
+                <span>{editingUser ? 'Ubah Data Pengguna / Owner' : 'Tambah Pengguna Baru'}</span>
+              </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
@@ -214,13 +295,15 @@ export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, on
 
             <form onSubmit={handleSaveUser} className="p-5 space-y-3.5 text-xs">
               <div>
-                <label className="text-slate-300 font-medium block mb-1">Nama Lengkap *</label>
+                <label className="text-slate-300 font-medium block mb-1">
+                  Nama Lengkap / Nama Pemilik *
+                </label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Siti Nurhaliza"
+                  placeholder="e.g. Ahmad Junaidi / Siti Nurhaliza"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-emerald-500"
                 />
               </div>
@@ -232,16 +315,18 @@ export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, on
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. kasir2"
+                  placeholder="e.g. owner / kasir1"
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-emerald-500 font-mono"
                 />
               </div>
 
               <div>
-                <label className="text-slate-300 font-medium block mb-1">Password Baru *</label>
+                <label className="text-slate-300 font-medium block mb-1">
+                  {editingUser ? 'Password Baru (Kosongkan jika tidak diubah)' : 'Password Login *'}
+                </label>
                 <input
                   type="password"
-                  required
+                  required={!editingUser}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -256,13 +341,13 @@ export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, on
                   onChange={(e: any) => setRole(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none focus:border-emerald-500"
                 >
-                  <option value="KASIR">Kasir (Hanya Transaksi POS & Cek Stok)</option>
                   <option value="OWNER">Owner (Akses Penuh Laba Rugi, HPP & Keuangan)</option>
+                  <option value="KASIR">Kasir (Hanya Transaksi POS & Cek Stok)</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-slate-300 font-medium block mb-1">No. WhatsApp Karyawan</label>
+                <label className="text-slate-300 font-medium block mb-1">No. WhatsApp</label>
                 <input
                   type="text"
                   value={phone}
@@ -285,7 +370,7 @@ export const UsersModule: React.FC<UsersModuleProps> = ({ users, currentUser, on
                   disabled={isSaving}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"
                 >
-                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   <span>{isSaving ? 'Menyimpan...' : 'Simpan Akun'}</span>
                 </button>
               </div>

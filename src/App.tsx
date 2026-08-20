@@ -289,6 +289,13 @@ export default function App() {
               currentUser={currentUser}
               onNavigate={setActiveTab}
               products={products}
+              settings={settings}
+              onUpdateCurrentUser={(updated) => {
+                setCurrentUser(updated);
+                localStorage.setItem('tb_user', JSON.stringify(updated));
+                showToast(`Profil ${updated.name} berhasil disimpan!`);
+                refreshAllData();
+              }}
               onRefresh={refreshAllData}
             />
           )}
@@ -361,12 +368,25 @@ export default function App() {
               users={users}
               currentUser={currentUser}
               onRefresh={refreshAllData}
+              onUpdateCurrentUser={(updated) => {
+                setCurrentUser(updated);
+                localStorage.setItem('tb_user', JSON.stringify(updated));
+                showToast(`Profil ${updated.name} berhasil disimpan!`);
+                refreshAllData();
+              }}
             />
           )}
 
           {activeTab === 'settings' && currentUser.role === 'OWNER' && (
             <SettingsModule
               settings={settings}
+              currentUser={currentUser}
+              onUpdateCurrentUser={(updated) => {
+                setCurrentUser(updated);
+                localStorage.setItem('tb_user', JSON.stringify(updated));
+                showToast(`Profil ${updated.name} berhasil disimpan!`);
+                refreshAllData();
+              }}
               onRefresh={refreshAllData}
               hideResetDemo={hideResetDemo}
               onToggleHideResetDemo={handleToggleHideResetDemo}

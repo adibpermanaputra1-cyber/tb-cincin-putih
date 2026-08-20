@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { DashboardOverview, User, Product, StoreShift } from '../types';
+import { DashboardOverview, User, Product, StoreShift, StoreSettings } from '../types';
 import { formatRupiah, formatNumber } from '../lib/format';
 import { api } from '../lib/api';
 import { StoreBalanceModal } from './StoreBalanceModal';
 import { ShiftModal } from './ShiftModal';
+import { EditProfileModal } from './EditProfileModal';
 import {
   TrendingUp,
   ShoppingBag,
@@ -33,6 +34,8 @@ import {
   Unlock,
   Building,
   Info,
+  Edit2,
+  Settings,
 } from 'lucide-react';
 
 interface DashboardModuleProps {
@@ -40,6 +43,8 @@ interface DashboardModuleProps {
   currentUser: User;
   onNavigate: (tab: string) => void;
   products: Product[];
+  settings?: StoreSettings | null;
+  onUpdateCurrentUser?: (user: User) => void;
   onRefresh?: () => void;
 }
 
@@ -48,6 +53,8 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({
   currentUser,
   onNavigate,
   products,
+  settings,
+  onUpdateCurrentUser,
   onRefresh,
 }) => {
   // State for Saldo Toko privacy toggle (Show / Mask)
@@ -56,6 +63,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({
   // Modals state
   const [isBalanceModalOpen, setIsBalanceModalOpen] = useState<boolean>(false);
   const [isShiftModalOpen, setIsShiftModalOpen] = useState<boolean>(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState<boolean>(false);
   const [shiftModalMode, setShiftModalMode] = useState<'OPEN' | 'CLOSE' | 'HISTORY'>('OPEN');
 
   // Dynamic live shift timer
@@ -124,7 +132,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-emerald-400 tracking-tight">
-                TB.CINCIN PUTIH
+                {settings?.storeName || 'TB.CINCIN PUTIH'}
               </h1>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -132,25 +140,38 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Jl. Raya Wajok Hulu KM. 11,5 (Depan Nawa Perkasa)
+              {settings?.address || 'Jl. Raya Wajok Hulu KM. 11,5 (Depan Nawa Perkasa)'}
             </p>
           </div>
         </div>
 
-        {/* User Profile Card */}
-        <div className="flex items-center gap-3 bg-slate-950/70 px-4 py-2 rounded-2xl border border-slate-800">
-          <div className="w-9 h-9 rounded-full bg-indigo-600 text-white font-extrabold flex items-center justify-center text-sm shadow-md">
+        {/* User Profile Card - Clickable & Editable */}
+        <div className="flex items-center gap-2.5 bg-slate-950/80 hover:bg-slate-950 p-2 sm:px-4 sm:py-2.5 rounded-2xl border border-slate-800/90 shadow-md transition group">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-600/90 text-white font-extrabold flex items-center justify-center text-sm shadow-md shrink-0 border border-indigo-400/30">
             {currentUser.name.charAt(0)}
           </div>
-          <div>
+          <div className="pr-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-white">{currentUser.name}</span>
-              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+              <span className="text-xs font-bold text-white group-hover:text-indigo-200 transition">
+                {currentUser.name}
+              </span>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                 {currentUser.role}
               </span>
             </div>
-            <span className="text-[10px] text-slate-400">@{currentUser.username || 'owner'}</span>
+            <span className="text-[10px] text-slate-400 font-mono">@{currentUser.username || 'owner'}</span>
           </div>
+
+          {/* Quick Edit Owner Profile Button (Pencil Icon) */}
+          <button
+            type="button"
+            onClick={() => setIsEditProfileOpen(true)}
+            title="Ubah Nama Pemilik & Profil Akun"
+            className="p-2 rounded-xl bg-slate-800/80 hover:bg-indigo-600 hover:text-white text-slate-300 border border-slate-700/60 transition cursor-pointer flex items-center gap-1"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline text-[10px] font-semibold">Ubah</span>
+          </button>
         </div>
       </div>
 
@@ -505,6 +526,20 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({
         currentUser={currentUser}
         initialMode={shiftModalMode}
         onShiftUpdated={fetchLatestOverview}
+      />
+
+      <EditProfileModal
+        isOpen={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        currentUser={currentUser}
+        onUserUpdated={(updatedUser) => {
+          if (onUpdateCurrentUser) onUpdateCurrentUser(updatedUser);
+        }}
+        settings={settings}
+        onRefresh={() => {
+          fetchLatestOverview();
+          if (onRefresh) onRefresh();
+        }}
       />
 
     </div>

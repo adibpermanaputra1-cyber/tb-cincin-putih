@@ -70,50 +70,62 @@ function setStorage<T>(key: string, data: T): void {
 
 export const localStore = {
   // --- AUTH ---
-  login: (email: string, pass: string): { token: string; user: User; greeting: string } => {
-    const cleanEmail = email.trim().toLowerCase();
+  login: (identifier: string, pass: string): { token: string; user: User; greeting: string } => {
+    const cleanId = identifier.trim().toLowerCase();
     const cleanPass = pass.trim();
 
-    if (cleanEmail === 'owner@toko.com' && (cleanPass === 'owner123' || cleanPass === 'admin123' || cleanPass === '1234')) {
-      const user = INITIAL_CLIENT_USERS[0];
-      return {
-        token: `jwt_owner_${Date.now()}`,
-        user,
-        greeting: 'Selamat datang kembali, Pak Ahmad & Buk Maesaroh! Berikut ringkasan penjualan, kas, dan stok TB. Cincin Putih hari ini.',
-      };
-    }
-
-    if ((cleanEmail === 'risma@toko.com' || cleanEmail === 'kasir@toko.com') && (cleanPass === 'kasir123' || cleanPass === 'risma123' || cleanPass === '1234')) {
-      const user = INITIAL_CLIENT_USERS[1];
-      return {
-        token: `jwt_risma_${Date.now()}`,
-        user,
-        greeting: 'Selamat bertugas, Risma! Siap melayani penjualan kasir TB. Cincin Putih hari ini?',
-      };
-    }
-
-    if (cleanEmail === 'ririn@toko.com' && (cleanPass === 'kasir123' || cleanPass === 'ririn123' || cleanPass === '1234')) {
-      const user = INITIAL_CLIENT_USERS[2];
-      return {
-        token: `jwt_ririn_${Date.now()}`,
-        user,
-        greeting: 'Selamat bertugas, Ririn! Siap melayani penjualan kasir TB. Cincin Putih hari ini?',
-      };
-    }
-
     const users = getStorage<User[]>(STORAGE_KEYS.USERS, INITIAL_CLIENT_USERS);
-    const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
-    if (existing && cleanPass.length >= 4) {
-      return {
-        token: `jwt_custom_${Date.now()}`,
-        user: existing,
-        greeting: existing.role === 'OWNER'
-          ? `Selamat datang kembali, ${existing.name}!`
-          : `Selamat bertugas, ${existing.name}!`,
-      };
+    const settings = getStorage<StoreSettings>(STORAGE_KEYS.SETTINGS, INITIAL_CLIENT_SETTINGS);
+
+    // Find user by email or username or alias
+    let user = users.find(u => 
+      u.email.toLowerCase() === cleanId || 
+      (u.username && u.username.toLowerCase() === cleanId) ||
+      (cleanId === 'admin' && u.role === 'OWNER') ||
+      (cleanId === 'owner' && u.role === 'OWNER')
+    );
+
+    if (!user) {
+      if (cleanId === 'owner@toko.com' || cleanId === 'admin' || cleanId === 'owner') {
+        user = users.find(u => u.role === 'OWNER') || INITIAL_CLIENT_USERS[0];
+      } else if (cleanId === 'risma' || cleanId === 'risma@toko.com' || cleanId === 'kasir@toko.com') {
+        user = users.find(u => u.username === 'risma' || u.email === 'risma@toko.com') || INITIAL_CLIENT_USERS[1];
+      } else if (cleanId === 'ririn' || cleanId === 'ririn@toko.com') {
+        user = users.find(u => u.username === 'ririn' || u.email === 'ririn@toko.com') || INITIAL_CLIENT_USERS[2];
+      }
     }
 
-    throw new Error('Email atau password salah. Silakan periksa kembali akun Anda.');
+    if (!user) {
+      throw new Error('Pengguna atau username tidak ditemukan. Silakan periksa kembali.');
+    }
+
+    // Password validation
+    const userPass = user.password;
+    const isPasswordValid =
+      (userPass && userPass === cleanPass) ||
+      (user.role === 'OWNER' && (cleanPass === 'owner123' || cleanPass === 'admin123' || cleanPass === '1234' || (userPass ? cleanPass === userPass : false))) ||
+      (user.role === 'KASIR' && (cleanPass === 'kasir123' || cleanPass === '1234' || (userPass ? cleanPass === userPass : false))) ||
+      (cleanPass.length >= 4 && !userPass);
+
+    if (!isPasswordValid) {
+      throw new Error('Kata sandi (password) salah. Silakan coba lagi.');
+    }
+
+    // Sync owner name from store settings if available
+    let resolvedUser = { ...user };
+    if (resolvedUser.role === 'OWNER' && settings.ownerName) {
+      resolvedUser.name = settings.ownerName;
+    }
+
+    const greeting = resolvedUser.role === 'OWNER'
+      ? `Selamat datang kembali, ${resolvedUser.name}! Berikut ringkasan penjualan, kas, dan stok ${settings.storeName || 'TB. Cincin Putih'} hari ini.`
+      : `Selamat bertugas, ${resolvedUser.name}! Siap melayani penjualan kasir ${settings.storeName || 'TB. Cincin Putih'} hari ini?`;
+
+    return {
+      token: `jwt_${resolvedUser.role.toLowerCase()}_${Date.now()}`,
+      user: resolvedUser,
+      greeting,
+    };
   },
 
   // --- PRODUCTS ---
